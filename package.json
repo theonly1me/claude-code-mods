@@ -1,0 +1,20 @@
+{
+  "name": "claude-code-mods",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prepare": "node tools/prepare.mjs",
+    "validate": "node tools/check.mjs validate",
+    "test": "node tools/check.mjs test",
+    "typecheck": "tsc --noEmit",
+    "previews": "node --import ./tools/typescript-loader.mjs tools/previews.mjs",
+    "integration": "node tools/integration.mjs",
+    "sdk-types": "node tools/sdk-types.mjs",
+    "smoke:install": "node tools/smoke.mjs install",
+    "smoke:model": "node tools/smoke.mjs model --use-local-auth"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

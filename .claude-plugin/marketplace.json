@@ -1,0 +1,41 @@
+{
+  "name": "claude-code-mods",
+  "owner": {
+    "name": "Atchyut"
+  },
+  "metadata": {
+    "description": "Original games, companions, and useful live change views for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "bugbound",
+      "source": "./plugins/bugbound",
+      "description": "A custom vampire hunts human villagers while Claude works."
+    },
+    {
+      "name": "little-harvest",
+      "source": "./plugins/little-harvest",
+      "description": "An automatic garden that grows with each Claude turn."
+    },
+    {
+      "name": "change-journal",
+      "source": "./plugins/change-journal",
+      "description": "Live explanations of edits with supporting code and checks."
+    },
+    {
+      "name": "behavior-map",
+      "source": "./plugins/behavior-map",
+      "description": "Before-and-after behavior flows backed by change evidence."
+    },
+    {
+      "name": "pocket-familiar",
+      "source": "./plugins/pocket-familiar",
+      "description": "A growing companion that lives alongside your work."
+    },
+    {
+      "name": "samurai-dojo",
+      "source": "./plugins/samurai-dojo",
+      "description": "A samurai trains, meditates, and battles as Claude works."
+    }
+  ]
+}

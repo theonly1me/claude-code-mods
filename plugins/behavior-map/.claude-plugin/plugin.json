@@ -1,0 +1,31 @@
+{
+  "name": "behavior-map",
+  "version": "0.1.0",
+  "description": "Before-and-after behavior flows backed by change evidence.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "liveSummaries": {
+      "type": "boolean",
+      "title": "Live summaries",
+      "description": "Analyze sanitized change evidence using your configured Claude provider. Uses additional model tokens.",
+      "default": true
+    },
+    "summaryModel": {
+      "type": "string",
+      "title": "Summary model",
+      "description": "The model used for change explanations.",
+      "default": "claude-sonnet-5-5"
+    },
+    "summaryEffort": {
+      "type": "string",
+      "title": "Summary effort",
+      "description": "Use low, medium, high, xhigh, or max.",
+      "default": "medium"
+    }
+  }
+}

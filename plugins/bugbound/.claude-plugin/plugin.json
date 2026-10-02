@@ -1,0 +1,11 @@
+{
+  "name": "bugbound",
+  "version": "0.1.1",
+  "description": "A custom vampire hunts human villagers while Claude works.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "types": "./types/index.d.ts"
+}

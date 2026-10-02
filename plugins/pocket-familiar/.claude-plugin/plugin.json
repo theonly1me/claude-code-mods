@@ -1,0 +1,11 @@
+{
+  "name": "pocket-familiar",
+  "version": "0.1.0",
+  "description": "A growing companion that lives alongside your work.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "types": "./types/index.d.ts"
+}

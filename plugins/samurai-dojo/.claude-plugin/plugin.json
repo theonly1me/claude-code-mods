@@ -1,0 +1,11 @@
+{
+  "name": "samurai-dojo",
+  "version": "0.2.0",
+  "description": "A samurai trains, meditates, and battles as Claude works.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "types": "./types/index.d.ts"
+}

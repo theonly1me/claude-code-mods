@@ -1,0 +1,9 @@
+node_modules/
+.claude-types/
+**/.claude-plugin/types/
+plugins/*/tsconfig.json
+.env
+.env.*
+.DS_Store
+.cache/
+coverage/
