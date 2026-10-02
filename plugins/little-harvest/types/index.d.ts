@@ -6,7 +6,7 @@ export type Publication = { enabled: boolean; heartbeat: number; revision: strin
 
 declare module 'claude-code' {
   interface PluginState {
-    bugbound: { claim: SceneClaim; lifecycle: WorldState }
+    'night-feast': { claim: SceneClaim; lifecycle: WorldState }
     'little-harvest': { claim: SceneClaim; lifecycle: WorldState }
     'samurai-dojo': { claim: SceneClaim; lifecycle: WorldState }
     'pocket-familiar': { claim: SceneClaim; lifecycle: WorldState }

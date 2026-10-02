@@ -35,7 +35,7 @@ export async function inlineRegister(entry) {
   const plugin = resolve(entry, '../..').split('/').at(-1)
   const ref = "{plugin:'" + plugin + "',key:'claim'}"
   source = source.replace(/import \{ atom, read, update \} from 'claude-code'\n/, '')
-  source = source.replace(/const claimAtom = atom\([^\n]+/, 'const claimAtom = { initial: { enabled: true, selectedAt: 0, expanded: true, playing: false } }')
+  source = source.replace(/const claimAtom = atom\([^\n]+/, 'const claimAtom = { initial: { enabled: false, selectedAt: 0, expanded: false, playing: false } }')
   source = source.replace('await read($, claimAtom)', '(await $.state.get(' + ref + ')).value ?? claimAtom.initial')
   source = source.replaceAll('await update($, claimAtom, () => claim)', 'await $.state.set(' + ref + ', claim)')
   const reads = source.match(/async function readScenes[\s\S]*?\n\}/)?.[0]
@@ -45,7 +45,7 @@ export async function inlineRegister(entry) {
   }
   const shell = source.match(/async function readShell[\s\S]*?\n\}/)?.[0]
   if (shell) source = source.replace(shell, '').replaceAll('await readShell($)', 'await (' + shell.slice(shell.indexOf('return ') + 7, -2).trim() + ')')
-  source = source.replace(/^    if \(claim.playing\) \{[^\n]+\n/gm, '')
+  source = source.replace(/^    if \(claim.playing[^\n]+\n/gm, '')
   source = source.replaceAll('publicationRef,', "{plugin:'" + plugin + "',key:'analysis'},")
   const syntax = ts.createSourceFile(entry, source, ts.ScriptTarget.Latest, true)
   const bindings = []

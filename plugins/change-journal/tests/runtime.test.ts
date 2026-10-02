@@ -5,6 +5,7 @@ test('live analysis calls Sonnet medium and links rendered explanations to code'
   on('session.cwd', () => ({ value: '/demo' }))
   on('command.register', ($, event) => ({ value: { command: event.name } }))
   on('session.start', ($, event) => ({ cwd: event.cwd }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
   on('turn.start', ($, event) => ({ turnId: event.turnId }))
   on('tool.call', () => ({ result: 'updated' }))
   let calls = 0
@@ -16,6 +17,7 @@ test('live analysis calls Sonnet medium and links rendered explanations to code'
     return { value: { isAnswered: true, text: JSON.stringify({ summary: 'Guard empty carts', entries: [{ text: 'Avoid requesting payment for an empty cart', evidenceIds: ['e1'] }], before: [{ text: 'Request payment', evidenceIds: ['e1'] }], after: [{ text: 'Check cart first', evidenceIds: ['e1'] }] }), usage: { input_tokens: 100, output_tokens: 50, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 } } }
   })
   await $.session.start({ cwd: '/demo', surface: 'terminal', isInteractive: true })
+  await $.command.run({ command: 'changes', args: 'show', origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 100 } })
   await $.turn.start({ text: 'Guard empty carts', turnId: 'turn-one' })
   await $.tool.call({ tool: 'Edit', file_path: '/demo/cart.ts', old_string: 'pay()', new_string: 'if (items.length) pay()' })
   await clock.advance(3000)
@@ -31,9 +33,11 @@ test('disabled summaries keep observed edits available without model calls', { o
   on('session.cwd', () => ({ value: '/demo' }))
   on('command.register', ($, event) => ({ value: { command: event.name } }))
   on('session.start', ($, event) => ({ cwd: event.cwd }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
   on('turn.start', ($, event) => ({ turnId: event.turnId }))
   on('tool.call', () => ({ result: 'updated' }))
   await $.session.start({ cwd: '/demo', surface: 'terminal', isInteractive: true })
+  await $.command.run({ command: 'changes', args: 'show', origin: { kind: 'composer' }, presentation: { isFullscreen: false, columns: 100 } })
   await $.turn.start({ text: 'Edit', turnId: 'turn-one' })
   await $.tool.call({ tool: 'Edit', file_path: '/demo/cart.ts', old_string: 'true', new_string: 'false' })
   await clock.advance(10000)

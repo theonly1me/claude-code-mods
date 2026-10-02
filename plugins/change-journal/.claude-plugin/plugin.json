@@ -1,6 +1,6 @@
 {
   "name": "change-journal",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Live explanations of edits with supporting code and checks.",
   "author": {
     "name": "Atchyut"

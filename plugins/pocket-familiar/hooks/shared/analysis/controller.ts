@@ -8,8 +8,8 @@ export function summaryEffort(value: unknown): ModelEffort {
 export function createController(options: PluginOptions): AnalysisController {
   return {
     evidence: [], revision: '', configuration: { enabled: options.liveSummaries !== false, model: typeof options.summaryModel === 'string' ? options.summaryModel : 'claude-sonnet-5-5', effort: summaryEffort(options.summaryEffort) },
-    publication: { enabled: options.liveSummaries !== false, heartbeat: 0, revision: '', status: 'waiting', analysis: null, requests: 0, tokens: 0 },
-    turnId: '', generation: 0, dirtyAt: 0, lastRequestAt: -10000, final: false, running: false, visible: true, selected: undefined, sequence: 0,
+    publication: { enabled: false, heartbeat: 0, revision: '', status: 'waiting', analysis: null, requests: 0, tokens: 0 },
+    turnId: '', generation: 0, dirtyAt: 0, lastRequestAt: -10000, final: false, running: false, visible: false, selected: undefined, sequence: 0,
   }
 }
 
@@ -18,7 +18,7 @@ export function resetController(options: { controller: AnalysisController; turnI
   controller.generation += 1
   controller.evidence = []; controller.revision = ''; controller.turnId = options.turnId
   controller.final = false; controller.dirtyAt = 0; controller.sequence = 0
-  controller.publication = { ...controller.publication, enabled: controller.configuration.enabled, revision: '', requests: 0, tokens: 0, status: 'waiting', analysis: null }
+  controller.publication = { ...controller.publication, enabled: controller.configuration.enabled && controller.visible, revision: '', requests: 0, tokens: 0, status: 'waiting', analysis: null }
 }
 
 export function recordEvidence(options: { controller: AnalysisController; evidence: Evidence; now: number }): void {
@@ -35,7 +35,7 @@ export function recordEvidence(options: { controller: AnalysisController; eviden
 
 export function shouldAnalyze(options: { controller: AnalysisController; now: number }): boolean {
   const { controller, now } = options
-  return controller.configuration.enabled && !controller.running && controller.revision !== '' && controller.revision !== controller.publication.revision
+  return controller.visible && controller.configuration.enabled && !controller.running && controller.revision !== '' && controller.revision !== controller.publication.revision
     && controller.publication.requests < (controller.final ? 6 : 5) && now - controller.lastRequestAt >= 10000 && (controller.final || now - controller.dirtyAt >= 2000)
 }
 

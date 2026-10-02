@@ -9,6 +9,8 @@ const evidence: Evidence = { id: 'e1', tool: 'Edit', status: 'successful', kind:
 test('explanations default to Sonnet 5.5 medium and batch meaningful changes', () => {
   const controller = createController({})
   expect(controller.configuration).toEqual({ enabled: true, model: 'claude-sonnet-5-5', effort: 'medium' })
+  expect(controller.visible).toBe(false)
+  controller.visible = true
   recordEvidence({ controller, evidence, now: 1000 })
   expect(shouldAnalyze({ controller, now: 2000 })).toBe(false)
   expect(shouldAnalyze({ controller, now: 3000 })).toBe(true)

@@ -11,7 +11,7 @@ Register the marketplace once. Run `/reload-plugins` in an open session after in
 
 The garden plays automatically. Recent unfinished beds and harvest baskets remain visible during the session. Persistent totals restore after a restart.
 
-Use `/farm show`, `hide`, `compact`, or `expanded`. The most recently selected scene owns the main area. It fills the available prompt-adjacent width, adapts to terminal size, and yields to question dialogs. Desktop uses colored text pixels.
+Use `/farm show`, `hide`, `compact`, or `expanded`. Starts hidden and opens compact with at most six animation rows. Expanded mode is capped at twelve. Click the scene buttons to switch, or Hide to close it. Question dialogs take priority. Desktop uses colored text pixels.
 
 ![Little Harvest synthetic preview](assets/preview.png)
 

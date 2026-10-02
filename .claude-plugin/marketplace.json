@@ -8,8 +8,8 @@
   },
   "plugins": [
     {
-      "name": "bugbound",
-      "source": "./plugins/bugbound",
+      "name": "night-feast",
+      "source": "./plugins/night-feast",
       "description": "A custom vampire hunts human villagers while Claude works."
     },
     {

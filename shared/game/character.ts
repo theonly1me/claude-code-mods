@@ -44,5 +44,6 @@ const feedingVampire: Sprite = [
 export function drawVampire(options: { bitmap: Bitmap; game: Game; tick: number; camera: number; ground: number; scale: number }): void {
   const { bitmap, game, tick, camera, ground, scale } = options
   const sprite = game.feeding !== null ? feedingVampire : !game.grounded ? jumpingVampire : tick % 6 < 3 ? flutteringVampire : vampire
-  drawSprite({ bitmap, sprite, x: (game.x - camera - 3) * scale, y: ground - (16 + sprite.length - game.y) * scale, scale, flipped: game.direction < 0 })
+  const fitted = bitmap.height < 13 ? [...sprite.slice(0, 6), ...sprite.slice(8)] : sprite
+  drawSprite({ bitmap, sprite: fitted, x: (game.x - camera - 3) * scale, y: ground - (16 + fitted.length - game.y) * scale, scale, flipped: game.direction < 0 })
 }

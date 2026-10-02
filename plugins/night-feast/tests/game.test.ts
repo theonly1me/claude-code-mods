@@ -1,4 +1,6 @@
 import { expect, test } from 'claude-code/testing'
+import { createBitmap } from '../hooks/shared/render/bitmap'
+import { drawGame } from '../hooks/shared/game/draw'
 import { createGame, advanceGame, moveGame, jumpGame, gameTestResult, buildPlatform } from '../hooks/shared/game/model'
 
 test('a jump lands on a raised platform without falling through', () => {
@@ -28,4 +30,13 @@ test('test failures add humans and successful checks trigger feeding', () => {
   expect(game.feeding).not.toBeNull()
   buildPlatform(game)
   expect(game.platforms.length).toBe(3)
+})
+
+test('the vampire keeps its full head and feet in a six-row scene', () => {
+  const bitmap = createBitmap({ width: 64, height: 12 })
+  const game = createGame()
+  game.x = 6
+  drawGame({ bitmap, game, tick: 4 })
+  expect(bitmap.pixels[64 + 7]).toBe(0x283042)
+  expect(bitmap.pixels[64 * 8 + 6]).toBe(0x283042)
 })

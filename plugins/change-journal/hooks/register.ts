@@ -18,6 +18,7 @@ export const register: Register = (on, options) => {
   let timer: Timer | undefined
   let abort = new AbortController()
   on('session.start', async ($, event, next) => {
+    controller.visible = false; controller.publication.enabled = false; controller.generation += 1; controller.running = false; abort.abort(); abort = new AbortController()
     root = await $.session.cwd()
     await $.command.register({ name: 'changes', description: 'Open Change Journal. Options: show, hide', immediate: true })
     controller.publication.heartbeat = await $.clock.now()
@@ -94,7 +95,7 @@ export const register: Register = (on, options) => {
     const result = await next(event)
     if (result.deny !== undefined) return result
     controller.configuration.enabled = result.value === true
-    controller.publication.enabled = controller.configuration.enabled
+    controller.publication.enabled = controller.configuration.enabled && controller.visible
     if (!controller.configuration.enabled) abort.abort()
     else abort = new AbortController()
     await $.state.set(publicationRef, controller.publication)
@@ -112,18 +113,27 @@ export const register: Register = (on, options) => {
   })
   on('command.run', { command: 'changes' }, async ($, event) => {
     const action = event.args.trim() || 'show'
-    if (action === 'hide') { controller.visible = false; await $.ui.close({ id: 'change-journal' }); $.ui.invalidate('ui.render'); return { text: 'Change Journal hidden.' } }
+    if (action === 'hide') { controller.visible = false; controller.publication.enabled = false; controller.generation += 1; controller.running = false; abort.abort(); await $.state.set(publicationRef, controller.publication); await $.ui.close({ id: 'change-journal' }); $.ui.invalidate('ui.render'); return { text: 'Change Journal hidden.' } }
     if (action !== 'show') return { text: 'Use /changes show or hide.' }
     controller.visible = true
+    if (abort.signal.aborted) abort = new AbortController()
+    controller.publication.enabled = controller.configuration.enabled
+    await $.state.set(publicationRef, controller.publication)
     await $.ui.open({ id: 'change-journal', title: 'Change Journal', rows: 16, columns: 56, closeOnEscape: true })
     $.ui.invalidate('ui.render')
     return {}
+  })
+  on('ui.close', { id: 'change-journal' }, async ($, event, next) => {
+    controller.visible = false; controller.publication.enabled = false; controller.generation += 1; controller.running = false; abort.abort()
+    await $.state.set(publicationRef, controller.publication)
+    $.ui.invalidate('ui.render')
+    return next(event)
   })
   on('ui.render', { component: 'AbovePrompt' }, async ($, event, next) => {
     if (event.props.hasSurvey || !controller.visible || event.props.maxRows < 3) return next(event)
     const publication = controller.publication
     const { Box, Text, Button } = $.ui.resolve(event)
-    return Box({ flexDirection: 'column', children: [Button({ key: 'open-changes', plain: true, label: 'Change Journal · ' + (publication.analysis?.summary ?? `${controller.evidence.filter(item => item.kind === 'edit').length} edits · ${publication.status}`), onPress: () => $.command.run({ command: 'changes', args: 'show' }) }), await next(event)] })
+    return Box({ flexDirection: 'column', children: [Button({ key: 'open-changes', plain: true, label: 'Change Journal · ' + (publication.analysis?.summary ?? `${controller.evidence.filter(item => item.kind === 'edit').length} edits · ${publication.status}`), onPress: () => $.ui.open({ id: 'change-journal', title: 'Change Journal', rows: 16, columns: 56, closeOnEscape: true }) }), await next(event)] })
   })
   on('ui.render', { component: 'Pane' }, async ($, event, next) => {
     if (event.requestId !== 'change-journal') return next(event)

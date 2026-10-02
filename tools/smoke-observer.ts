@@ -2,6 +2,11 @@ import type { Register } from 'claude-code'
 
 export const register: Register = on => {
   const calls: { model: string | undefined; effort: string | undefined; maxTokens: number | undefined; timeoutMs: number | undefined; answered: boolean }[] = []
+  on('session.start', async ($, event, next) => {
+    const result = await next(event)
+    await $.command.run({ command: 'changes', args: 'show' })
+    return result
+  })
   on('model.complete', async ($, event, next) => {
     const result = await next(event)
     calls.push({ model: event.model, effort: event.effort, maxTokens: event.maxTokens, timeoutMs: event.timeoutMs, answered: result.value?.isAnswered === true })

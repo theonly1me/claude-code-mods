@@ -13,7 +13,7 @@ await writeFile(resolve(directory, 'hooks/hooks.json'), JSON.stringify({ modules
 await writeFile(resolve(directory, 'hooks/register.ts'), "export const register = on => { on('session.start', ($, event, next) => next(event)) }\n")
 await cp(resolve(root, 'types'), resolve(directory, 'types'), { recursive: true })
 await cp(resolve(root, 'types/contracts.d.ts'), resolve(directory, 'types/index.d.ts'))
-const names = ['bugbound', 'little-harvest', 'samurai-dojo', 'pocket-familiar', 'change-journal', 'behavior-map']
+const names = ['night-feast', 'little-harvest', 'samurai-dojo', 'pocket-familiar', 'change-journal', 'behavior-map']
 for (const name of names) {
   await mkdir(resolve(directory, 'siblings', name, 'hooks'), { recursive: true })
   await writeFile(resolve(directory, 'siblings', name, 'hooks/register.js'), await inlineRegister(resolve(root, 'plugins', name, 'hooks/register.ts')))

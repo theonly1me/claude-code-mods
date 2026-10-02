@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register, CoreEngineInterface, Timer } from 'claude-code'
 import { classifyActivity, currentActivity, activityLabel, isTestEdit } from './shared/activity'
 import type { Activity } from './shared/activity'
-import { selectedScene, sceneDimensions, sceneCommands, sceneTitles } from './shared/scene'
+import { selectedScene, sceneDimensions, sceneCommands, sceneLabels } from './shared/scene'
 import type { Claim } from './shared/scene'
 import { createWorld, beginWorld, finishWorld, finishActivity, advanceWorld, worldDescription, snapshotWorld, restoreWorld } from './shared/world'
 import { parseProgress, totalProgress, petStage } from './shared/progress'
@@ -13,14 +13,14 @@ import { createDojo } from './sim/dojo'
 import { drawTraining } from './training'
 import { stampScaled } from './shared/render/bitmap'
 
-const claimAtom = atom({ plugin: 'samurai-dojo', key: 'claim' } as const, { enabled: true, selectedAt: 0, expanded: true, playing: false })
+const claimAtom = atom({ plugin: 'samurai-dojo', key: 'claim' } as const, { enabled: false, selectedAt: 0, expanded: false, playing: false })
 function noop(): undefined { return undefined }
 async function readScenes($: CoreEngineInterface) {
-  const bugbound = await $.state.get({ plugin: 'bugbound', key: 'claim' })
+  const nightFeast = await $.state.get({ plugin: 'night-feast', key: 'claim' })
   const farm = await $.state.get({ plugin: 'little-harvest', key: 'claim' })
   const dojo = await $.state.get({ plugin: 'samurai-dojo', key: 'claim' })
   const pet = await $.state.get({ plugin: 'pocket-familiar', key: 'claim' })
-  return [{ name: 'bugbound', claim: bugbound.value }, { name: 'little-harvest', claim: farm.value }, { name: 'samurai-dojo', claim: dojo.value }, { name: 'pocket-familiar', claim: pet.value }] as const
+  return [{ name: 'night-feast', claim: nightFeast.value }, { name: 'little-harvest', claim: farm.value }, { name: 'samurai-dojo', claim: dojo.value }, { name: 'pocket-familiar', claim: pet.value }] as const
 }
 
 export const register: Register = on => {
@@ -42,7 +42,7 @@ export const register: Register = on => {
   function paint() { return encodeCells(sceneBitmap()) }
   on('session.start', async ($, event, next) => {
     await $.command.register({ name: 'dojo', description: 'Show Samurai Dojo. Options: show, hide, compact, expanded', immediate: true })
-    claim = await read($, claimAtom)
+    claim = { ...await read($, claimAtom), enabled: false, expanded: false, playing: false }
     await update($, claimAtom, () => claim)
     progressKey = 'progress:' + await $.session.id()
     const values = []
@@ -142,14 +142,15 @@ export const register: Register = on => {
 
       return theirs
     }
-    dimensions = sceneDimensions({ columns: event.props.bodyColumns, rows: event.props.maxRows, expanded: claim.expanded, reservedRows: 5 })
+    dimensions = sceneDimensions({ columns: event.props.bodyColumns, rows: event.props.maxRows, expanded: claim.expanded, reservedRows: 6 })
     if (dimensions.rows < 2 || dimensions.columns < 24) return Box({ flexDirection: 'column', children: [Text({ children: ['Samurai Dojo · ' + activityLabel(world.activity)] }), theirs] })
-    const buttons = entries.filter(entry => entry.claim !== undefined).map(entry => Button({ key: entry.name, label: sceneTitles[entry.name], plain: true, dimColor: entry.name !== winner, onPress: () => $.command.run({ command: sceneCommands[entry.name], args: 'show' }) }))
+    const buttons = entries.filter(entry => entry.claim !== undefined).map(entry => Button({ key: entry.name, label: sceneLabels[entry.name], dimColor: entry.name !== winner, onPress: () => entry.name === winner ? undefined : $.command.run({ command: sceneCommands[entry.name], args: 'show' }) }))
+    const controls = Box({ flexDirection: 'row', columnGap: 1, children: [Button({ key: 'size', label: claim.expanded ? 'Compact' : 'Expand', onPress: async () => { claim = { ...claim, expanded: !claim.expanded }; await update($, claimAtom, () => claim); $.ui.invalidate('ui.render') } }), Button({ key: 'hide', label: 'Hide', onPress: async () => { claim = { ...claim, enabled: false, playing: false }; await update($, claimAtom, () => claim); $.ui.invalidate('ui.render') } })] })
     const header = Text({ children: ['Samurai Dojo · ' + activityLabel(world.activity) + ' · ' + worldDescription({ world, scene: 'samurai-dojo' })], color: 'cyan', wrap: 'truncate' })
-    if (event.surface !== 'terminal') return Box({ flexDirection: 'column', children: [header, colorText({ elements: { Box, Text }, bitmap: sceneBitmap() }), Box({ flexDirection: 'row', children: buttons }), theirs] })
+    if (event.surface !== 'terminal') return Box({ flexDirection: 'column', children: [header, colorText({ elements: { Box, Text }, bitmap: sceneBitmap() }), Box({ flexDirection: 'row', columnGap: 1, children: buttons }), controls, theirs] })
     const { Raster } = $.ui.resolve(event)
 
     requestId = event.requestId
-    return Box({ flexDirection: 'column', children: [header, Raster({ key: 'stage', columns: dimensions.columns, rows: dimensions.rows, cells: paint() }), Box({ flexDirection: 'row', columnGap: 2, children: buttons }), theirs] })
+    return Box({ flexDirection: 'column', children: [header, Raster({ key: 'stage', columns: dimensions.columns, rows: dimensions.rows, cells: paint() }), Box({ flexDirection: 'row', columnGap: 1, children: buttons }), controls, theirs] })
   })
 }

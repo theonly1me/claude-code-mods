@@ -20,7 +20,7 @@ function run(options) {
 }
 if (mode === 'install') {
   run({ arguments: ['plugin', 'marketplace', 'add', root, '--json'] })
-  for (const name of ['bugbound', 'little-harvest', 'samurai-dojo', 'pocket-familiar', 'change-journal', 'behavior-map']) {
+  for (const name of ['night-feast', 'little-harvest', 'samurai-dojo', 'pocket-familiar', 'change-journal', 'behavior-map']) {
     run({ arguments: ['plugin', 'install', name + '@claude-code-mods', '--json'] })
     console.log('Installed ' + name + ' in isolated configuration')
   }

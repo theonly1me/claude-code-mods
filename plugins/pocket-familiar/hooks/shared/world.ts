@@ -61,7 +61,7 @@ export function advanceWorld(options: { world: World; playing: boolean }): void 
 
 export function worldDescription(options: { world: World; scene: SceneName }): string {
   const { world, scene } = options
-  if (scene === 'bugbound') return `${world.game.meals} humans eaten · ${world.game.platforms.length} platforms`
+  if (scene === 'night-feast') return `${world.game.meals} humans eaten · ${world.game.platforms.length} platforms`
   if (scene === 'little-harvest') return `${world.harvests} harvested · ${world.completed} turns`
   if (scene === 'samurai-dojo') return `${world.kills} aliens defeated · ${world.completed} turns`
   return `${petStage(world.completed)} companion · ${world.completed} completed turns`

@@ -9,7 +9,7 @@ claude plugin install change-journal@claude-code-mods
 
 Register the marketplace once. Run `/reload-plugins` in an open session after installing. Requires Claude Code 2.1.287 or later; no build step or runtime dependencies.
 
-The latest-update strip appears automatically. `/changes` or `/changes show` opens a detailed pane without stealing focus. `/changes hide` hides the pane and strip. Live analysis is configured separately with `liveSummaries`, `summaryModel`, and `summaryEffort` in `/plugin`.
+Starts hidden. Opening the view also enables its latest-update strip and automatic analysis. `/changes` or `/changes show` opens a detailed pane without stealing focus. `/changes hide` hides the pane and strip. Closing or hiding the view stops automatic analysis. Live analysis is configured separately with `liveSummaries`, `summaryModel`, and `summaryEffort` in `/plugin`.
 
 Default analysis uses `claude-sonnet-5-5` with `medium` effort. Requests debounce for two seconds, remain at least ten seconds apart, and stop after six per main turn. Each has a 4,096-token output limit and a twenty-second timeout. Factual evidence remains available when analysis fails. Code excerpts stay in memory; bounded sanitized evidence goes through your configured Claude provider.
 
