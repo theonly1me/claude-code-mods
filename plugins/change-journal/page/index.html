@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change Journal</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="masthead">
+  <div class="identity">
+    <h1 id="project">Change Journal</h1>
+    <p id="subtitle">Waiting for this session's first data</p>
+  </div>
+  <div class="vitals" aria-live="polite">
+    <span id="live" class="live">Connecting</span>
+    <span class="stat"><strong id="stat-files">0</strong> files</span>
+    <span class="stat add"><strong id="stat-added">+0</strong></span>
+    <span class="stat del"><strong id="stat-removed">−0</strong></span>
+    <span class="stat" id="stat-tests"></span>
+  </div>
+</header>
+<div class="layout">
+  <nav class="rail" id="rail" aria-label="Turns and edits"></nav>
+  <main>
+    <div class="tabs" role="tablist" aria-label="Views">
+      <button role="tab" data-tab="changes" aria-selected="true">Changes</button>
+      <button role="tab" data-tab="behavior" aria-selected="false">Behavior</button>
+      <button role="tab" data-tab="files" aria-selected="false">Files</button>
+      <button id="follow" class="follow" type="button" hidden>Follow new changes</button>
+    </div>
+    <section id="view" role="tabpanel"></section>
+  </main>
+</div>
+<script src="core.js"></script>
+<script src="timeline.js"></script>
+<script src="changes.js"></script>
+<script src="behavior.js"></script>
+<script src="files.js"></script>
+</body>
+</html>

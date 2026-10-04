@@ -1,0 +1,25 @@
+{
+  "name": "grill",
+  "version": "0.1.0",
+  "description": "While Claude works on your task, a sharp partner asks the questions that change the result. Answers reach Claude mid-turn. Brainstorm and side chat modes too.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "userConfig": {
+    "startMode": {
+      "type": "string",
+      "title": "Start mode",
+      "description": "What happens on a task prompt: grill asks questions, brainstorm suggests ideas, off waits for /grill ask.",
+      "default": "grill",
+      "options": ["grill", "brainstorm", "off"]
+    },
+    "helperModel": {
+      "type": "string",
+      "title": "Helper model",
+      "description": "The model alias or id that writes questions and chats with you.",
+      "default": "haiku"
+    }
+  }
+}

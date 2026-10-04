@@ -1,31 +1,30 @@
 {
   "name": "change-journal",
-  "version": "0.1.1",
-  "description": "Live explanations of edits with supporting code and checks.",
+  "version": "0.3.0",
+  "description": "A live HTML page that shows every change Claude makes, with diffs, the reason for each edit, checks, and before/after behavior flows.",
   "author": {
     "name": "Atchyut"
   },
   "license": "MIT",
   "repository": "https://github.com/theonly1me/claude-code-mods",
-  "types": "./types/index.d.ts",
   "userConfig": {
-    "liveSummaries": {
+    "autoOpen": {
       "type": "boolean",
-      "title": "Live summaries",
-      "description": "Analyze sanitized change evidence using your configured Claude provider. Uses additional model tokens.",
+      "title": "Open the page on the first edit",
+      "description": "Open the live change page in your browser when Claude makes the first edit of a session.",
       "default": true
     },
-    "summaryModel": {
-      "type": "string",
-      "title": "Summary model",
-      "description": "The model used for change explanations.",
-      "default": "claude-sonnet-5-5"
+    "liveSummaries": {
+      "type": "boolean",
+      "title": "Turn summaries",
+      "description": "After each turn with edits, ask the helper model for a title, an explanation, and before/after behavior flows. Uses extra tokens.",
+      "default": true
     },
-    "summaryEffort": {
+    "helperModel": {
       "type": "string",
-      "title": "Summary effort",
-      "description": "Use low, medium, high, xhigh, or max.",
-      "default": "medium"
+      "title": "Helper model",
+      "description": "The model alias or id for turn summaries.",
+      "default": "haiku"
     }
   }
 }

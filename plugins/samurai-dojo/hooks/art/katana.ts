@@ -1,6 +1,6 @@
-import { setPixel } from '../render/bitmap'
-import type { Bitmap, Color } from '../render/bitmap'
-import { lerp, toRadians } from '../render/colors'
+import { setPixel } from '../shared/pixel/bitmap'
+import type { Bitmap, Color } from '../shared/pixel/bitmap'
+import { lerp, toRadians } from '../shared/pixel/colors'
 
 const GRIP: Color = 0x5a3a22
 const GUARD: Color = 0xf2c14e

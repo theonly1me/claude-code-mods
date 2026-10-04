@@ -1,5 +1,5 @@
-import { setPixel } from '../render/bitmap'
-import type { Bitmap, Color } from '../render/bitmap'
+import { setPixel } from '../shared/pixel/bitmap'
+import type { Bitmap, Color } from '../shared/pixel/bitmap'
 import { FLOOR_TOP, STAGE_HEIGHT } from '../sim/constants'
 
 const FLOOR_LIGHT: Color = 0x8b5e3c

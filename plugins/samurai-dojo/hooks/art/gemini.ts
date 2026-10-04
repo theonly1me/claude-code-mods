@@ -1,5 +1,5 @@
-import { parsePixelMap, withSymbols } from './pixelMap'
-import type { FrameSet } from './pixelMap'
+import { parsePixelMap, withSymbols } from '../shared/pixel/sprite'
+import type { FrameSet } from '../shared/pixel/sprite'
 
 const PALETTE = {
   b: 0x4f8bf5,

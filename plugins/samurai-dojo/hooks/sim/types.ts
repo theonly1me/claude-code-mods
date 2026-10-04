@@ -35,7 +35,7 @@ export type Samurai = {
   isCheerRequested: boolean
 }
 
-export type EffectKind = 'hit' | 'clang' | 'dust'
+export type EffectKind = 'hit' | 'clang' | 'dust' | 'flurry'
 
 export type Effect = { kind: EffectKind; x: number; y: number; ageMs: number }
 

@@ -1,4 +1,4 @@
-import { lerp } from '../render/colors'
+import { lerp } from '../shared/pixel/colors'
 import {
   ARC_TRAIL_PROGRESS,
   SLASH_MS,

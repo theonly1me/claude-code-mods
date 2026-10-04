@@ -1,5 +1,5 @@
-import { parsePixelMap, replaceRows } from './pixelMap'
-import type { Bitmap } from '../render/bitmap'
+import { parsePixelMap, replaceRows } from '../shared/pixel/sprite'
+import type { Bitmap } from '../shared/pixel/bitmap'
 
 const PALETTE = {
   g: 0xf2c14e,

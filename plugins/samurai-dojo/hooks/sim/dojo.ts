@@ -1,8 +1,10 @@
-import { clearBitmap, createBitmap } from '../render/bitmap'
-import type { Bitmap } from '../render/bitmap'
+import { clearBitmap, createBitmap } from '../shared/pixel/bitmap'
+import type { Bitmap } from '../shared/pixel/bitmap'
 import { drawScene } from '../draw/scene'
 import {
   FLOOR_TOP,
+  FLURRY_KILLS,
+  FLURRY_WINDOW_MS,
   HURT_MS,
   MAX_ALIVE_MONSTERS,
   MAX_COLUMNS,
@@ -10,6 +12,8 @@ import {
 } from './constants'
 import { advanceEffects } from './effects'
 import { advanceMonsters, applyStrike, createMonster, nearestDoomed } from './monsters'
+import { rankOf } from './rank'
+import type { Rank } from './rank'
 import { advanceSamurai, createSamurai } from './samurai'
 import type { Effect, KillEvent, KillTally, Monster, MonsterPlan } from './types'
 
@@ -20,13 +24,30 @@ export function createDojo() {
   let monsters: Monster[] = []
   let effects: Effect[] = []
   let tally: KillTally = { codex: 0, gemini: 0 }
+  let lifetimeKills = 0
+  let recentKillTimes: number[] = []
+  let flurries = 0
   let nextId = 1
   let columns = MAX_COLUMNS
   let bitmap = createBitmap({ width: columns, height: STAGE_HEIGHT })
 
+  function noteFlurry(): void {
+    recentKillTimes = [...recentKillTimes, samurai.clockMs].filter(
+      time => samurai.clockMs - time <= FLURRY_WINDOW_MS,
+    )
+    if (recentKillTimes.length < FLURRY_KILLS) {
+      return
+    }
+    recentKillTimes = []
+    flurries += 1
+    effects.push({ kind: 'flurry', x: samurai.x + 14, y: FLOOR_TOP - 6, ageMs: 0 })
+  }
+
   function recordKill(plan: MonsterPlan): void {
     tally = { ...tally, [plan.kind]: tally[plan.kind] + 1 }
+    lifetimeKills += 1
     pendingKills.push({ kind: plan.kind, isElite: plan.isElite })
+    noteFlurry()
   }
 
   function resolveImpact(target: Monster): void {
@@ -42,8 +63,6 @@ export function createDojo() {
   }
 
   return {
-    hasCombat(): boolean { return monsters.length > 0 },
-
     resize(nextColumns: number): void {
       if (nextColumns === columns) {
         return
@@ -52,12 +71,25 @@ export function createDojo() {
       bitmap = createBitmap({ width: columns, height: STAGE_HEIGHT })
     },
 
-    restore(saved: KillTally): void {
-      tally = { codex: saved.codex, gemini: saved.gemini }
+    restore(saved: { tally: KillTally; lifetimeKills: number }): void {
+      tally = { codex: saved.tally.codex, gemini: saved.tally.gemini }
+      lifetimeKills = saved.lifetimeKills
     },
 
     tally(): KillTally {
       return tally
+    },
+
+    lifetimeKills(): number {
+      return lifetimeKills
+    },
+
+    flurries(): number {
+      return flurries
+    },
+
+    rank(): Rank {
+      return rankOf(lifetimeKills)
     },
 
     spawn(options: { isElite: boolean }): number {
@@ -114,6 +146,7 @@ export function createDojo() {
         effects,
         samurai,
         totalKills: tally.codex + tally.gemini,
+        rank: rankOf(lifetimeKills),
       })
       return bitmap
     },

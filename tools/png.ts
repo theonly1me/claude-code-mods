@@ -1,6 +1,6 @@
 import { deflateSync } from 'node:zlib'
 
-import type { Bitmap, Color } from '../shared/render/bitmap'
+import type { Bitmap, Color } from '../shared/pixel/bitmap.ts'
 
 const SIGNATURE = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10)
 

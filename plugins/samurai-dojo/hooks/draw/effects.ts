@@ -1,6 +1,6 @@
-import { setPixel } from '../render/bitmap'
-import type { Bitmap } from '../render/bitmap'
-import { toRadians } from '../render/colors'
+import { setPixel } from '../shared/pixel/bitmap'
+import type { Bitmap } from '../shared/pixel/bitmap'
+import { toRadians } from '../shared/pixel/colors'
 import { EFFECT_STYLES } from '../sim/effects'
 import type { Effect } from '../sim/types'
 

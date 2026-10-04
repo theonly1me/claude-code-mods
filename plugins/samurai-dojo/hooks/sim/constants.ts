@@ -30,3 +30,5 @@ export const MAX_ALIVE_MONSTERS = 4
 export const DEATH_MS = 760
 export const FLASH_MS = 120
 export const WALK_FRAME_MS = 280
+export const FLURRY_WINDOW_MS = 1500
+export const FLURRY_KILLS = 3
