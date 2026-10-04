@@ -1,4 +1,5 @@
-import type { Bitmap } from '../render/bitmap'
+import type { Bitmap } from '../shared/pixel/bitmap'
+import type { Rank } from '../sim/rank'
 import type { Effect, Monster, Samurai } from '../sim/types'
 import { drawBackdrop } from './backdrop'
 import { drawEffect } from './effects'
@@ -12,11 +13,12 @@ export function drawScene(options: {
   effects: readonly Effect[]
   samurai: Samurai
   totalKills: number
+  rank: Rank
 }): void {
-  const { bitmap } = options
+  const { bitmap, rank } = options
   drawBackdrop(bitmap)
-  drawKillCount({ bitmap, total: options.totalKills })
+  drawKillCount({ bitmap, total: options.totalKills, iconColor: rank.bright })
   options.monsters.forEach(monster => drawMonster({ bitmap, monster }))
-  drawSamurai({ bitmap, samurai: options.samurai })
+  drawSamurai({ bitmap, samurai: options.samurai, rank })
   options.effects.forEach(effect => drawEffect({ bitmap, effect }))
 }

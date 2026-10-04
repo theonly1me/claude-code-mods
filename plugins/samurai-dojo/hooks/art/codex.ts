@@ -1,5 +1,5 @@
-import { parsePixelMap, replaceRows } from './pixelMap'
-import type { FrameSet } from './pixelMap'
+import { parsePixelMap, replaceRows } from '../shared/pixel/sprite'
+import type { FrameSet } from '../shared/pixel/sprite'
 
 const PALETTE = {
   h: 0x7b8aa0,

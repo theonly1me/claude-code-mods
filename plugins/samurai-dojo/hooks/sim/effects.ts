@@ -1,4 +1,4 @@
-import type { Color } from '../render/bitmap'
+import type { Color } from '../shared/pixel/bitmap'
 import type { Effect, EffectKind } from './types'
 
 export type EffectStyle = {
@@ -10,6 +10,7 @@ export type EffectStyle = {
 
 const ALL_DIRECTIONS = [0, 45, 90, 135, 180, 225, 270, 315]
 const UPWARD_DIRECTIONS = [-160, -110, -70, -20]
+const FLURRY_DIRECTIONS = Array.from({ length: 31 }, (_, step) => -120 + step * 8)
 
 export const EFFECT_STYLES: Record<EffectKind, EffectStyle> = {
   hit: {
@@ -29,6 +30,12 @@ export const EFFECT_STYLES: Record<EffectKind, EffectStyle> = {
     reach: 4,
     colors: [0xc9b79c, 0x8b7355],
     anglesDegrees: UPWARD_DIRECTIONS,
+  },
+  flurry: {
+    durationMs: 520,
+    reach: 14,
+    colors: [0xffffff, 0xfff3b0, 0xf2c14e, 0xd97757],
+    anglesDegrees: FLURRY_DIRECTIONS,
   },
 }
 

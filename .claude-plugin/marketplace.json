@@ -4,38 +4,48 @@
     "name": "Atchyut"
   },
   "metadata": {
-    "description": "Original games, companions, and useful live change views for Claude Code."
+    "description": "Useful live views and autoplaying pixel games for Claude Code."
   },
   "plugins": [
     {
-      "name": "night-feast",
-      "source": "./plugins/night-feast",
-      "description": "A custom vampire hunts human villagers while Claude works."
-    },
-    {
-      "name": "little-harvest",
-      "source": "./plugins/little-harvest",
-      "description": "An automatic garden that grows with each Claude turn."
-    },
-    {
       "name": "change-journal",
       "source": "./plugins/change-journal",
-      "description": "Live explanations of edits with supporting code and checks."
+      "description": "A live HTML page that shows every change Claude makes, with diffs, the reason for each edit, checks, and before/after behavior flows."
     },
     {
-      "name": "behavior-map",
-      "source": "./plugins/behavior-map",
-      "description": "Before-and-after behavior flows backed by change evidence."
+      "name": "decision-lens",
+      "source": "./plugins/decision-lens",
+      "description": "See the decisions Claude made in each turn, why it made them, and steer future turns with keep and avoid rules."
     },
     {
-      "name": "pocket-familiar",
-      "source": "./plugins/pocket-familiar",
-      "description": "A growing companion that lives alongside your work."
+      "name": "grill",
+      "source": "./plugins/grill",
+      "description": "While Claude works on your task, a sharp partner asks the questions that change the result. Answers reach Claude mid-turn. Brainstorm and side chat modes too."
     },
     {
       "name": "samurai-dojo",
       "source": "./plugins/samurai-dojo",
-      "description": "A samurai trains, meditates, and battles as Claude works."
+      "description": "A Claude samurai cuts down a Codex or Gemini alien for every tool call Claude makes."
+    },
+    {
+      "name": "slayer-corps",
+      "source": "./plugins/slayer-corps",
+      "description": "Tanjiro, Nezuko, Zenitsu, and Inosuke fight their way to Muzan as you and Claude work. The story continues every session."
+    },
+    {
+      "name": "night-feast",
+      "source": "./plugins/night-feast",
+      "description": "A vampire feeds on every tool call Claude finishes while the moon tracks how full the context window is. Dawn means it is time to compact."
+    },
+    {
+      "name": "little-harvest",
+      "source": "./plugins/little-harvest",
+      "description": "Every file that changes becomes a crop: Claude's edits and yours grow a farm above the prompt, tests bring sun or storms, and passing turns fill the barn."
+    },
+    {
+      "name": "pocket-familiar",
+      "source": "./plugins/pocket-familiar",
+      "description": "A fox spirit that lives on your work: passing tests feed it, finished turns cheer it, and it grows up to nine tails."
     }
   ]
 }

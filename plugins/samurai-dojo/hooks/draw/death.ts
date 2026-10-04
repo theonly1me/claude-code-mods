@@ -1,6 +1,6 @@
-import { setPixel } from '../render/bitmap'
-import type { Bitmap, Color } from '../render/bitmap'
-import { mixColors, WHITE } from '../render/colors'
+import { setPixel } from '../shared/pixel/bitmap'
+import type { Bitmap, Color } from '../shared/pixel/bitmap'
+import { mixColors, WHITE } from '../shared/pixel/colors'
 
 const CODE_GREEN: Color = 0x4ade80
 const TWIN_PINK: Color = 0xe86a92

@@ -1,0 +1,24 @@
+{
+  "name": "decision-lens",
+  "version": "0.1.0",
+  "description": "See the decisions Claude made in each turn, why it made them, and steer future turns with keep and avoid rules.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "userConfig": {
+    "explainTurns": {
+      "type": "boolean",
+      "title": "Explain each turn",
+      "description": "After each turn with real work, ask the helper model to name the decisions Claude made. Uses extra tokens.",
+      "default": true
+    },
+    "helperModel": {
+      "type": "string",
+      "title": "Helper model",
+      "description": "The model alias or id that reads each turn. Ask why always uses the session's own model.",
+      "default": "haiku"
+    }
+  }
+}

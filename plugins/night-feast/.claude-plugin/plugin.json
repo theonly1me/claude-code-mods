@@ -1,7 +1,7 @@
 {
   "name": "night-feast",
-  "version": "0.1.2",
-  "description": "A custom vampire hunts human villagers while Claude works.",
+  "version": "0.3.0",
+  "description": "A vampire feeds on every tool call Claude finishes while the moon tracks how full the context window is. Dawn means it is time to compact.",
   "author": {
     "name": "Atchyut"
   },

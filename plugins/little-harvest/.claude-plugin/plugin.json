@@ -1,11 +1,10 @@
 {
   "name": "little-harvest",
-  "version": "0.1.1",
-  "description": "An automatic garden that grows with each Claude turn.",
+  "version": "0.3.0",
+  "description": "Every file that changes becomes a crop: Claude's edits and yours grow a farm above the prompt, tests bring sun or storms, and passing turns fill the barn.",
   "author": {
     "name": "Atchyut"
   },
   "license": "MIT",
-  "repository": "https://github.com/theonly1me/claude-code-mods",
-  "types": "./types/index.d.ts"
+  "repository": "https://github.com/theonly1me/claude-code-mods"
 }

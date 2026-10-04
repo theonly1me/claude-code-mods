@@ -20,3 +20,7 @@ export function safePath(options: { path: string; root: string }): string | unde
 export function excerpt(text: string): string {
   return sanitize(text).slice(0, 3000)
 }
+
+export function isSecretPath(path: string): boolean {
+  return /(?:^|\/)(?:\.env(?:\.[^/]*)?|\.aws|\.ssh|credentials(?:\.[^/]*)?|secrets?(?:\.[^/]*)?)(?:\/|$)|\.(?:pem|key|p12|pfx)$/i.test(path)
+}

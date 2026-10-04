@@ -1,11 +1,10 @@
 {
   "name": "pocket-familiar",
-  "version": "0.1.1",
-  "description": "A growing companion that lives alongside your work.",
+  "version": "0.3.0",
+  "description": "A fox spirit that lives on your work: passing tests feed it, finished turns cheer it, and it grows up to nine tails.",
   "author": {
     "name": "Atchyut"
   },
   "license": "MIT",
-  "repository": "https://github.com/theonly1me/claude-code-mods",
-  "types": "./types/index.d.ts"
+  "repository": "https://github.com/theonly1me/claude-code-mods"
 }
