@@ -15,7 +15,7 @@ Register the marketplace once. Run `/reload-plugins` in an open session after in
 
 Looks redraws the rows of the transcript. It never changes what Claude reads or does. Out of the box it tidies tool calls and leaves the layout alone. Themes, compact rows, and the centered layout are choices you make.
 
-![Synthwave with a name tag, a framed reply, a divider, and a pixel scene](assets/preview.png)
+![Synthwave with name tags, a framed reply, and a themed divider](assets/preview.png)
 
 ![Tool calls with the default tidy view](assets/tool-rows.png)
 
@@ -27,7 +27,7 @@ Looks redraws the rows of the transcript. It never changes what Claude reads or 
   - a name tag on your prompt and on each reply, and a colored tag on each tool name;
   - the reply in a framed, tinted panel (double green lines for Retro CRT, bold pink for Punk, rounded neon for Synthwave, thin ink for Zen paper);
   - a themed divider between turns that keeps Claude Code's own turn word and the time;
-  - a small pixel scene above the prompt that moves while Claude works: a neon sun and grid for Synthwave, a phosphor terminal with a bar graph for Retro CRT, a torn-paper banner with lightning for Punk, and an ensō with raked sand for Zen paper.
+  - result bars in the theme's own glyph and color.
   
   `themeStyle: simple` only recolors text. Themes keep Claude Code's own spinner and turn footer words, unless you turn on `themeWords`.
 - **Base theme**: a theme also sets the Claude Code base theme that suits it, in the same tone (dark or light) as yours. Retro CRT uses the ANSI variant, Zen paper the colorblind-friendly one, and Punk and Synthwave the plain one. If your base theme is `auto`, Looks leaves it alone. `/theme off` and `/exit` put your own base theme back.
@@ -53,21 +53,21 @@ With tidy or compact tool calls, press ctrl+o to see every tool call in full, wi
 
 ## Themes
 
-Each image is a real session with the theme on. The scene above the prompt moves while Claude works.
+Each image is a real session with the theme on.
 
-Retro CRT: phosphor green on black, double-line panels, an amber accent, and a scanline terminal with a live bar graph.
+Retro CRT: phosphor green on black, double-line panels, an amber accent, and `═` dividers.
 
 ![Retro CRT](assets/theme-retro.png)
 
-Punk: hot pink and acid yellow, bold frames, zigzag dividers, and a torn-paper banner with flashing lightning.
+Punk: hot pink and acid yellow, bold frames, yellow name tags, and zigzag dividers.
 
 ![Punk](assets/theme-punk.png)
 
-Synthwave: neon magenta and cyan, rounded frames, a gradient divider, and a striped sun over a grid that scrolls.
+Synthwave: neon magenta and cyan, rounded frames, and a divider that fades from magenta to cyan.
 
 ![Synthwave](assets/theme-synthwave.png)
 
-Zen paper: quiet ink and moss tones, thin frames, dotted dividers, and an ensō that turns slowly while Claude works. It also has a light paper variant when your terminal is light.
+Zen paper: quiet ink and moss tones, thin frames, sage name tags, and dotted dividers. It also has a light paper variant when your terminal is light.
 
 ![Zen paper](assets/theme-zen.png)
 

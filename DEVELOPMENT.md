@@ -50,7 +50,7 @@ Verified on **2026-10-04** with Claude Code **2.1.289**:
 | Check | Result |
 | --- | --- |
 | Marketplace and eleven plugins, `claude plugin validate --strict` | Passed |
-| `claude plugin test`, all plugins | 183 passed |
+| `claude plugin test`, all plugins | 182 passed |
 | `tsc --noEmit` over shared code, plugins, tools, and tests | Passed |
 | Live session, all eleven mods loaded in tmux with `CLAUDE_CODE_NO_FLICKER=1` | No game at start. `/dojo` docked the dojo beside the transcript, `/farm` replaced it, and a new session opened the farm again |
 | Work panes | `/why` and `/changes` opened with the keys; `/why keep 1` saved a rule; the lens docked as a tab beside the game |

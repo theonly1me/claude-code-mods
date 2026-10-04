@@ -44,7 +44,7 @@
     "themeStyle": {
       "type": "string",
       "title": "Theme style",
-      "description": "rich gives each theme framed reply panels, name tags, themed dividers, and an animated pixel scene above the prompt. simple only recolors text.",
+      "description": "rich gives each theme framed reply panels, name tags, colored tool tags, and themed dividers. simple only recolors text.",
       "default": "rich",
       "options": ["rich", "simple"]
     }

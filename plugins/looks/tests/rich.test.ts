@@ -10,8 +10,6 @@ const LOOKS = [
   { args: 'zen', border: 'single', borderColor: '#8a8378', user: 'you' },
 ] as const
 
-const BAND = { hasSurvey: false, isWorking: true, maxRows: 30, bodyColumns: 120, scroll: { offset: 0, bodyRows: 30 }, view: {} } as const
-
 async function reply(options: { $: Engine; id: string }) {
   return options.$.ui.mount({
     plugin: 'looks',
@@ -73,26 +71,10 @@ test('tool names become colored tags and result bars take the theme glyph', asyn
   expect(await result.find({ type: 'Text', text: '║ ' })).toBeDefined()
 })
 
-test('a pixel scene draws above the prompt while a theme is on, and only then', async ($, on) => {
-  engine({ on })
-  await start($)
-  const off = await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'AbovePrompt', props: BAND })
-  expect((await off.findAll({ type: 'Raster' })).length).toBe(0)
-  await runTheme({ $, args: 'synthwave' })
-  const band = await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'AbovePrompt', props: BAND })
-  const raster = await band.find({ type: 'Raster' })
-  expect(raster?.props.key).toBe('looks:scene')
-  expect(raster?.props.rows).toBe(6)
-  const survey = await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'AbovePrompt', props: { ...BAND, hasSurvey: true } })
-  expect((await survey.findAll({ type: 'Raster' })).length).toBe(0)
-})
-
 test('with themeStyle simple a theme only recolors text', { options: { themeStyle: 'simple' } }, async ($, on) => {
   engine({ on })
   await start($)
   await runTheme({ $, args: 'synthwave' })
-  const band = await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'AbovePrompt', props: BAND })
-  expect((await band.findAll({ type: 'Raster' })).length).toBe(0)
   const mounted = await reply({ $, id: 'simple' })
   const boxes = await mounted.findAll({ type: 'Box' })
   expect(boxes.some(box => box.props.borderStyle !== undefined)).toBe(false)
