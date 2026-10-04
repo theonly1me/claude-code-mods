@@ -53,7 +53,7 @@ async function mountTool(options: { $: Engine; tool: string; input: unknown; out
   })
 }
 
-test('common tools draw as one compact line', async ($, on) => {
+test('common tools draw as one compact line', { options: { toolCalls: 'compact', layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   for (const entry of CASES) {
@@ -65,14 +65,14 @@ test('common tools draw as one compact line', async ($, on) => {
   }
 })
 
-test('a failed call shows the first line of its error', async ($, on) => {
+test('a failed call shows the first line of its error', { options: { toolCalls: 'compact', layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   const row = await mountTool({ $, tool: 'Bash', input: { command: 'npm test' }, output: 'Error: 2 tests failed\nmore', isErrored: true })
   expect(await row.find({ type: 'Text', text: '  failed: Error: 2 tests failed' })).toBeDefined()
 })
 
-test('other tools get a one-line row named after the tool', async ($, on) => {
+test('other tools get a one-line row named after the tool', { options: { toolCalls: 'compact', layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   const row = await mountTool({ $, tool: 'mcp__claude_ai_Docs__search_pages', input: { query: 'release notes', limit: 3 }, output: {} })
@@ -81,7 +81,7 @@ test('other tools get a one-line row named after the tool', async ($, on) => {
   expect(await row.drawn()).toMatchObject({ type: 'Box', props: { paddingLeft: 30 } })
 })
 
-test('plan and question tools keep the engine rows, centered by padding', async ($, on) => {
+test('plan and question tools keep the engine rows, centered by padding', { options: { toolCalls: 'compact', layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   const row = await mountTool({ $, tool: 'ExitPlanMode', input: { plan: 'step one' }, output: {} })
@@ -99,7 +99,7 @@ test('plan and question tools keep the engine rows, centered by padding', async 
   expect(await result.find({ text: 'engine row' })).toBeDefined()
 })
 
-test('results of compact tools are folded into their line', async ($, on) => {
+test('results of compact tools are folded into their line', { options: { toolCalls: 'compact', layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   const result = await $.ui.mount({
@@ -112,7 +112,7 @@ test('results of compact tools are folded into their line', async ($, on) => {
   expect(await result.find({ text: 'engine row' })).toBeUndefined()
 })
 
-test('an expanded group and the ctrl+o transcript show the full rows', async ($, on) => {
+test('an expanded group and the ctrl+o transcript show the full rows', { options: { toolCalls: 'compact', layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   const calls = [

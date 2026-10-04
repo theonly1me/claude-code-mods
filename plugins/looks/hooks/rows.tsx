@@ -1,8 +1,9 @@
 import type { On } from 'claude-code'
 
-import { readingColumn, toolLine } from './looks/frame'
+import { readingColumn, resultBlock, toolLine } from './looks/frame'
 import { summarizeGroup } from './looks/group'
-import { currentTheme, displayPath, isCentered, isCompactView, isGroupUnfolded, looksSettings, palette } from './looks/state'
+import { resultView } from './looks/result'
+import { currentTheme, displayPath, isCentered, isGroupUnfolded, looksSettings, palette, resultLimit, toolView } from './looks/state'
 import { isSummarized, summarizeTool } from './looks/summary'
 
 const DEFAULT_GROUP_MARK = '\u23fa'
@@ -16,7 +17,7 @@ export function installRows(on: On): void {
     const { Box, Text } = $.ui.resolve(e)
     const layout = { Box, width: looksSettings().readingWidth, isCentered: isCentered(), columns: e.viewport?.columns }
     const state = { isRunning: e.props.isRunning, isErrored: e.props.isErrored, isInterrupted: e.props.isInterrupted }
-    const summary = isCompactView()
+    const summary = toolView() !== 'plain'
       ? summarizeTool({ tool: e.props.tool, input: e.props.input, output: e.props.output, state, path: displayPath })
       : undefined
     if (!summary) {
@@ -29,15 +30,22 @@ export function installRows(on: On): void {
     if (e.surface !== 'terminal') {
       return next(e)
     }
-    const { Box } = $.ui.resolve(e)
-    if (isCompactView() && isSummarized(e.props.tool)) {
+    const { Box, Text } = $.ui.resolve(e)
+    const view = toolView()
+    if (view === 'compact' && isSummarized(e.props.tool)) {
       return <Box />
     }
-    if (!isCentered()) {
-      return next(e)
+    const layout = { Box, width: looksSettings().readingWidth, isCentered: isCentered(), columns: e.viewport?.columns }
+    if (view === 'tidy' && isSummarized(e.props.tool)) {
+      const shown = resultView({ tool: e.props.tool, output: e.props.output, isErrored: e.props.isErrored, limit: resultLimit() })
+      if (shown.kind === 'none') {
+        return <Box />
+      }
+      if (shown.kind === 'lines') {
+        return readingColumn({ ...layout, children: resultBlock({ Box, Text, colors: palette(), lines: shown.lines, more: shown.more }) })
+      }
     }
-    const layout = { Box, width: looksSettings().readingWidth, isCentered: true, columns: e.viewport?.columns }
-    return readingColumn({ ...layout, isEngineNode: true, children: await next(e) })
+    return isCentered() ? readingColumn({ ...layout, isEngineNode: true, children: await next(e) }) : next(e)
   })
 
   on('ui.render', { component: 'ToolGroup' }, async ($, e, next) => {
@@ -46,7 +54,7 @@ export function installRows(on: On): void {
     }
     const { Box, Text } = $.ui.resolve(e)
     const layout = { Box, width: looksSettings().readingWidth, isCentered: isCentered(), columns: e.viewport?.columns }
-    if (isGroupUnfolded(e.props.isExpanded) || !isCompactView()) {
+    if (isGroupUnfolded(e.props.isExpanded) || toolView() === 'plain') {
       return isCentered() ? readingColumn({ ...layout, isEngineNode: true, children: await next(e) }) : next(e)
     }
     const theme = currentTheme()

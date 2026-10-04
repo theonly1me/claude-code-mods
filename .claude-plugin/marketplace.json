@@ -35,7 +35,7 @@
     {
       "name": "looks",
       "source": "./plugins/looks",
-      "description": "Make Claude Code look the way you like: one-line tool calls, replies centered at a reading width, and four themes (Retro CRT, Punk, Synthwave, Zen paper) switched with /theme."
+      "description": "Make Claude Code look the way you like: four themes (Retro CRT, Punk, Synthwave, Zen paper) switched with /theme, tidier tool calls, and optional one-line tool rows and replies centered at a reading width."
     },
     {
       "name": "samurai-dojo",

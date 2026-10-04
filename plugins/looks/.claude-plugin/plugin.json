@@ -1,7 +1,7 @@
 {
   "name": "looks",
   "version": "0.1.0",
-  "description": "Make Claude Code look the way you like: one-line tool calls, replies centered at a reading width, and four themes (Retro CRT, Punk, Synthwave, Zen paper) switched with /theme.",
+  "description": "Make Claude Code look the way you like: four themes (Retro CRT, Punk, Synthwave, Zen paper) switched with /theme, tidier tool calls, and optional one-line tool rows and replies centered at a reading width.",
   "author": {
     "name": "Atchyut"
   },
@@ -18,16 +18,16 @@
     "toolCalls": {
       "type": "string",
       "title": "Tool calls",
-      "description": "compact draws each tool call as one line (ctrl+o shows them in full); full keeps Claude Code's own rows.",
-      "default": "compact",
-      "options": ["compact", "full"]
+      "description": "full draws each tool call as a header line with its output in a short bar under it; compact draws one line and hides the output; plain keeps Claude Code's own rows. ctrl+o shows every row in full.",
+      "default": "full",
+      "options": ["full", "compact", "plain"]
     },
     "layout": {
       "type": "string",
       "title": "Layout",
-      "description": "centered puts prompts, tool calls, and replies in one column at the reading width; left keeps them at the left edge.",
-      "default": "centered",
-      "options": ["centered", "left"]
+      "description": "left keeps prompts, tool calls, and replies at the left edge; centered puts them in one column at the reading width.",
+      "default": "left",
+      "options": ["left", "centered"]
     },
     "readingWidth": {
       "type": "number",
