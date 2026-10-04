@@ -15,13 +15,21 @@ Register the marketplace once. Run `/reload-plugins` in an open session after in
 
 Looks redraws the rows of the transcript. It never changes what Claude reads or does. Out of the box it tidies tool calls and leaves the layout alone. Themes, compact rows, and the centered layout are choices you make.
 
+![Synthwave with name tags, a framed reply, and a themed divider](assets/preview.png)
+
 ![Tool calls with the default tidy view](assets/tool-rows.png)
 
 - **Tidy tool calls** (setting `toolCalls: full`, the default) draw each call as a header line: a mark, the tool, its target, and a short result such as `+4 -1` or `failed`. Under it, the output sits in a short dim bar. An edit shows only its changed lines in green and red. A shell command shows its first 6 lines and `N more lines (ctrl+o for all)`. Reads, searches, and other calls with no output add nothing under the header. A failed call shows the first lines of its error in red.
 - **Compact tool calls** (setting `toolCalls: compact`) draw one line per call and hide the output. A run of reads and searches folds into one line such as `Read 3 files, ran 1 command`. Any other tool, MCP tools included, gets one line with its name and its main argument.
 - **Plain tool calls** (setting `toolCalls: plain`) leave every tool row to Claude Code.
 - **Centered layout** (setting `layout: centered`) puts replies, prompts, and tool lines in one column at the reading width (100 characters by default), centered in the transcript.
-- **Themes** restyle your prompt row, the tool lines, a bar beside each reply, the spinner words, the turn footer, and the end of the hint line under the prompt.
+- **Themes** give each look its own character. With the default `themeStyle: rich`, a theme draws:
+  - a name tag on your prompt and on each reply, and a colored tag on each tool name;
+  - the reply in a framed, tinted panel (double green lines for Retro CRT, bold pink for Punk, rounded neon for Synthwave, thin ink for Zen paper);
+  - a themed divider between turns that keeps Claude Code's own turn word and the time;
+  - result bars in the theme's own glyph and color.
+  
+  `themeStyle: simple` only recolors text. Themes keep Claude Code's own spinner and turn footer words, unless you turn on `themeWords`.
 - **Base theme**: a theme also sets the Claude Code base theme that suits it, in the same tone (dark or light) as yours. Retro CRT uses the ANSI variant, Zen paper the colorblind-friendly one, and Punk and Synthwave the plain one. If your base theme is `auto`, Looks leaves it alone. `/theme off` and `/exit` put your own base theme back.
 
 ## How to use
@@ -45,19 +53,21 @@ With tidy or compact tool calls, press ctrl+o to see every tool call in full, wi
 
 ## Themes
 
-Retro CRT: phosphor green, an amber accent, a `C:\>` prompt, and `PROCESSING █` while Claude works.
+Each image is a real session with the theme on.
+
+Retro CRT: phosphor green on black, double-line panels, an amber accent, and `═` dividers.
 
 ![Retro CRT](assets/theme-retro.png)
 
-Punk: hot pink and acid yellow, `✖` marks, and `SHREDDING !!`.
+Punk: hot pink and acid yellow, bold frames, yellow name tags, and zigzag dividers.
 
 ![Punk](assets/theme-punk.png)
 
-Synthwave: neon magenta and cyan, `▶` and `◆` marks, and `CRUISING ~`.
+Synthwave: neon magenta and cyan, rounded frames, and a divider that fades from magenta to cyan.
 
 ![Synthwave](assets/theme-synthwave.png)
 
-Zen paper: quiet ink and moss tones, `○` marks, and `breathing…`.
+Zen paper: quiet ink and moss tones, thin frames, sage name tags, and dotted dividers. It also has a light paper variant when your terminal is light.
 
 ![Zen paper](assets/theme-zen.png)
 
@@ -69,6 +79,8 @@ Change these in `/plugin`:
 - `toolCalls` (`full`): `full` is the tidy view above. `compact` draws one line per call. `plain` keeps Claude Code's own tool rows.
 - `layout` (`left`): `centered` puts rows and replies in one column at the reading width. `left` keeps them at the left edge.
 - `readingWidth` (`100`): the column width in characters.
+- `themeStyle` (`rich`): `rich` is the full look above. `simple` only recolors text.
+- `themeWords` (off): on uses the theme's spinner and footer words, such as `CRUISING` or `Shredded`. Off keeps Claude Code's own words.
 
 ## Limits
 

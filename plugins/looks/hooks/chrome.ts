@@ -1,12 +1,13 @@
 import type { On } from 'claude-code'
 
-import { currentTheme } from './looks/state'
+import { divider } from './looks/rich'
+import { currentLook, currentTheme, isThemeWords, looksSettings } from './looks/state'
 import { pickWord } from './looks/themes'
 
 export function installChrome(on: On): void {
   on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
     const theme = currentTheme()
-    if (e.surface !== 'terminal' || !theme || e.props.message !== null) {
+    if (e.surface !== 'terminal' || !theme || !isThemeWords() || e.props.message !== null) {
       return next(e)
     }
     const word = pickWord({ words: theme.spinnerWords, seed: e.props.word })
@@ -15,7 +16,14 @@ export function installChrome(on: On): void {
 
   on('ui.render', { component: 'TurnDuration' }, async ($, e, next) => {
     const theme = currentTheme()
-    if (e.surface !== 'terminal' || !theme) {
+    const look = currentLook()
+    if (e.surface === 'terminal' && look) {
+      const { Box, Text } = $.ui.resolve(e)
+      const width = Math.min(looksSettings().readingWidth, e.viewport?.columns ?? looksSettings().readingWidth)
+      const word = theme && isThemeWords() ? pickWord({ words: theme.doneWords, seed: e.requestId }) : e.props.word
+      return divider({ Box, Text, look, width, word, durationMs: e.props.durationMs })
+    }
+    if (e.surface !== 'terminal' || !theme || !isThemeWords()) {
       return next(e)
     }
     return next({ ...e, props: { ...e.props, word: pickWord({ words: theme.doneWords, seed: e.requestId }) } })

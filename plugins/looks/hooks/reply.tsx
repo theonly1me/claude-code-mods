@@ -1,7 +1,8 @@
 import type { On } from 'claude-code'
 
 import { promptLine, readingColumn, replyFrame } from './looks/frame'
-import { currentTheme, isCentered, looksSettings, noteTranscriptExpanded, palette } from './looks/state'
+import { replyPanel, userRow } from './looks/rich'
+import { currentLook, currentTheme, isCentered, looksSettings, noteTranscriptExpanded, palette } from './looks/state'
 
 const MARKDOWN_LIMIT = 10000
 
@@ -14,6 +15,10 @@ export function installReply(on: On): void {
     const { Box, Text, Markdown } = $.ui.resolve(e)
     const layout = { Box, width: looksSettings().readingWidth, isCentered: isCentered(), columns: e.viewport?.columns }
     const body = <Markdown text={e.props.text} />
+    const look = currentLook()
+    if (look) {
+      return readingColumn({ ...layout, gapAbove: e.props.isFirstOfReply ? 1 : 0, children: replyPanel({ Box, Text, look, isFirst: e.props.isFirstOfReply, body }) })
+    }
     return readingColumn({ ...layout, gapAbove: 1, children: replyFrame({ Box, Text, theme, colors: palette(), isFirst: e.props.isFirstOfReply, body }) })
   })
 
@@ -30,6 +35,10 @@ export function installReply(on: On): void {
     const isPrompt = e.props.origin.kind === 'composer' && e.props.task === undefined && e.props.from === undefined
     if (!isPrompt) {
       return readingColumn({ ...layout, isEngineNode: true, children: await next(e) })
+    }
+    const look = currentLook()
+    if (look) {
+      return readingColumn({ ...layout, gapAbove: 1, children: userRow({ Box, Text, look, text: e.props.text, promptText: palette().promptText }) })
     }
     return readingColumn({ ...layout, gapAbove: 1, children: promptLine({ Box, Text, theme, colors: palette(), text: e.props.text }) })
   })
