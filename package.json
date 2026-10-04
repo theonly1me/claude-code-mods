@@ -9,6 +9,7 @@
     "test": "node tools/check.mjs test",
     "typecheck": "tsc --noEmit",
     "storyboard": "node --import ./tools/typescript-loader.mjs tools/storyboard.mjs",
+    "animate": "node --import ./tools/typescript-loader.mjs tools/animate.mjs",
     "previews": "node --import ./tools/typescript-loader.mjs tools/previews.mjs",
     "journal-preview": "node --import ./tools/typescript-loader.mjs tools/journal-preview.ts",
     "sdk-types": "node tools/sdk-types.mjs",

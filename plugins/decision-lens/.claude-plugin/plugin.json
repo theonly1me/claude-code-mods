@@ -1,6 +1,6 @@
 {
   "name": "decision-lens",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "See the decisions Claude made in each turn, why it made them, and steer future turns with keep and avoid rules.",
   "author": {
     "name": "Atchyut"
@@ -18,7 +18,14 @@
       "type": "string",
       "title": "Helper model",
       "description": "The model alias or id that reads each turn. Ask why always uses the session's own model.",
-      "default": "haiku"
+      "default": "claude-sonnet-5-5"
+    },
+    "helperEffort": {
+      "type": "string",
+      "title": "Helper effort",
+      "description": "How hard the helper model thinks when it reads a turn: low, medium, or high.",
+      "default": "medium",
+      "options": ["low", "medium", "high"]
     }
   }
 }

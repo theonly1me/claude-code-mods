@@ -26,9 +26,23 @@ const STAND = [
   '..d.d..',
 ]
 
+const CROUCH = [
+  '.......',
+  '.......',
+  '..hhh..',
+  '..bbb..',
+  'HhhhhhH',
+  '..ssk..',
+  '.rOOOr.',
+  '.sOoOrs',
+  '.oOOOo.',
+  '.d...d.',
+]
+
 const STRIDE = replaceRows({ rows: STAND, replacements: { '..o.o..': '.o...o.', '..d.d..': '.d...d.' } })
 const WORK = replaceRows({ rows: STAND, replacements: { '.rOOOr.': '.rOOOrs', '.sOoOs.': '.sOoO..' } })
 const CHEER = replaceRows({ rows: STAND, replacements: { '..sss..': 's.sss.s', '.rOOOr.': 'rrOOOrr', '.sOoOs.': '..OoO..' } })
+const REST = replaceRows({ rows: CROUCH, replacements: { '..ssk..': '..sss..', '.sOoOrs': '.sOoOs.' } })
 
 export const FARMER_WIDTH = 7
 export const FARMER_HEIGHT = STAND.length
@@ -39,4 +53,6 @@ export const FARMER_FRAMES = {
   stride: parsePixelMap({ rows: STRIDE, palette: PALETTE }),
   work: parsePixelMap({ rows: WORK, palette: PALETTE }),
   cheer: parsePixelMap({ rows: CHEER, palette: PALETTE }),
+  crouch: parsePixelMap({ rows: CROUCH, palette: PALETTE }),
+  rest: parsePixelMap({ rows: REST, palette: PALETTE }),
 } satisfies Record<string, Bitmap>

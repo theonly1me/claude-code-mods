@@ -47,10 +47,17 @@ const SPREAD = [
   '...kk..kk...',
 ]
 
+const LEGS_STANDING = '...kk..kk...'
+const STRIDE_WIDE = '..kk....kk..'
+const STRIDE_CLOSE = '....kkkk....'
+
 const BAT_PALETTE = { b: 0x5b4a82, B: 0x3b2d55, e: 0xff3355 } as const
 
 const BAT_UP = ['b.......b', 'bB.....Bb', '.bBebeBb.', '...BBB...']
 const BAT_DOWN = ['.........', '...BBB...', 'bbBebeBbb', 'b.......b']
+
+const ROOST_BASE = ['B...B', 'BeBeB', 'bBBBb', '.B.B.']
+const ROOST_EYES = { front: 'BeBeB', left: 'eBeBB', right: 'BBeBe', shut: 'BBBBB' } as const
 
 const MINI_BAT_UP = ['b.b', '.B.']
 const MINI_BAT_DOWN = ['.B.', 'b.b']
@@ -71,3 +78,23 @@ export const MINI_BAT_FRAMES: readonly [Bitmap, Bitmap] = [
 ]
 export const SWEAT = 0x7dd3fc
 export const HURT_TINT = 0xff6b6b
+export const VAMPIRE_STRIDES: readonly [Bitmap, Bitmap] = [
+  parsePixelMap({ rows: replaceRows({ rows: STANDING, replacements: { [LEGS_STANDING]: STRIDE_WIDE } }), palette: PALETTE }),
+  parsePixelMap({ rows: replaceRows({ rows: STANDING, replacements: { [LEGS_STANDING]: STRIDE_CLOSE } }), palette: PALETTE }),
+]
+
+export type RoostLook = keyof typeof ROOST_EYES
+
+function roostFor(look: RoostLook): Bitmap {
+  return parsePixelMap({ rows: replaceRows({ rows: ROOST_BASE, replacements: { BeBeB: ROOST_EYES[look] } }), palette: BAT_PALETTE })
+}
+
+export const ROOST_FRAMES: Readonly<Record<RoostLook, Bitmap>> = {
+  front: roostFor('front'),
+  left: roostFor('left'),
+  right: roostFor('right'),
+  shut: roostFor('shut'),
+}
+
+export const EYE_COLOR = PALETTE.e
+export const SHADOW_COLOR = 0x07050d

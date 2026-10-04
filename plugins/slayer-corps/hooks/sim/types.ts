@@ -2,9 +2,11 @@ export type SlayerName = 'tanjiro' | 'nezuko' | 'zenitsu' | 'inosuke' | 'hashira
 
 export type AttackKind = 'water' | 'flame' | 'thunder' | 'beast' | 'blaze' | 'sun'
 
-export type Attack = { attacker: SlayerName; kind: AttackKind; damage: number }
+export type MoveStyle = 'hit' | 'clash' | 'feint' | 'form' | 'dodge' | 'doze'
 
-export type ActorMode = 'home' | 'dash' | 'strike' | 'return' | 'stagger' | 'offstage'
+export type Attack = { attacker: SlayerName; kind: AttackKind; damage: number; style: MoveStyle; source: string }
+
+export type ActorMode = 'home' | 'dash' | 'strike' | 'return' | 'stagger' | 'offstage' | 'hop' | 'doze'
 
 export type Actor = {
   name: SlayerName
@@ -21,7 +23,7 @@ export type DemonShape = 'brute' | 'lantern' | 'spider' | 'lanky' | 'vase' | 'mo
 
 export type Backdrop = 'snow' | 'market' | 'hall' | 'forest' | 'train' | 'town' | 'castle'
 
-export type ParticleKind = 'water' | 'ember' | 'spark' | 'ash' | 'blade' | 'snow' | 'claw'
+export type ParticleKind = 'water' | 'ember' | 'spark' | 'ash' | 'blade' | 'snow' | 'claw' | 'parry'
 
 export type Particle = {
   kind: ParticleKind

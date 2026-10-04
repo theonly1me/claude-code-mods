@@ -1,12 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
-import {
-  configureStage,
-  installStage,
-  STAGE_HIDDEN_KEY,
-  toggleStageHidden,
-} from './shared/pixel/stage'
+import { configureStage, installStage } from './shared/pixel/stage'
 import { FRAME_MS, MAX_COLUMNS, MIN_COLUMNS, STAGE_ROWS } from './sim/constants'
 import { createDojo } from './sim/dojo'
 import { nextRankOf } from './sim/rank'
@@ -16,63 +11,63 @@ const LIFETIME_KEY = 'lifetimeKills'
 const tallyAtom = atom({ plugin: 'samurai-dojo', key: 'tally' } as const, {
   codex: 0,
   gemini: 0,
+  chatgpt: 0,
 })
 
 export const register: Register = on => {
   const dojo = createDojo()
 
-  function summary(): string {
-    const { codex, gemini } = dojo.tally()
-    return `samurai dojo · ${dojo.rank().title} · ${codex + gemini} slain this session · ${dojo.lifetimeKills()} lifetime`
+  function totalSlain(): number {
+    const { codex, gemini, chatgpt } = dojo.tally()
+    return codex + gemini + chatgpt
+  }
+
+  function report(): string[] {
+    const nextRank = nextRankOf(dojo.lifetimeKills())
+    const progress = nextRank
+      ? `${nextRank.minimumKills - dojo.lifetimeKills()} more to ${nextRank.title}.`
+      : 'The highest rank.'
+    return [
+      dojo.summary(),
+      `Rank: ${dojo.rank().title}. ${progress} Flurries this session: ${dojo.flurries()}.`,
+      `Slain this session: ${totalSlain()}. Lifetime: ${dojo.lifetimeKills()}.`,
+    ]
   }
 
   configureStage({
-    rasterKey: 'samurai-dojo:stage',
+    game: 'samurai-dojo',
+    title: 'Samurai Dojo',
+    command: {
+      name: 'dojo',
+      description: 'Show or hide the samurai dojo (on, off, stats)',
+      report,
+    },
     rows: STAGE_ROWS,
     minColumns: MIN_COLUMNS,
     maxColumns: MAX_COLUMNS,
     frameMs: FRAME_MS,
     scene: {
+      begin: epochMs => dojo.begin(epochMs),
       resize: columns => dojo.resize(columns),
       tick: dtMs => dojo.tick({ dtMs }),
       frame: () => dojo.frame(),
-      summary,
+      summary: () => dojo.summary(),
+      log: () => dojo.log(),
     },
   })
   installStage(on)
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({
-      name: 'dojo',
-      description: 'Show or hide the samurai dojo and see your rank',
-      immediate: true,
-    })
+    const saved = await read($, tallyAtom)
     dojo.restore({
-      tally: await read($, tallyAtom),
+      tally: { codex: saved.codex, gemini: saved.gemini, chatgpt: saved.chatgpt ?? 0 },
       lifetimeKills: Number((await $.store.get(LIFETIME_KEY)) ?? 0),
     })
     return next(e)
   })
 
-  on('command.run', { command: 'dojo' }, async $ => {
-    const isHidden = toggleStageHidden()
-    await $.store.set(STAGE_HIDDEN_KEY, isHidden)
-    $.ui.invalidate('ui.render')
-    const nextRank = nextRankOf(dojo.lifetimeKills())
-    const progress = nextRank
-      ? `${nextRank.minimumKills - dojo.lifetimeKills()} more to ${nextRank.title}.`
-      : 'The highest rank.'
-    return {
-      text: [
-        isHidden ? 'The dojo is closed.' : 'The dojo is open.',
-        summary(),
-        `Rank: ${dojo.rank().title}. ${progress} Flurries this session: ${dojo.flurries()}.`,
-      ].join('\n'),
-    }
-  })
-
   on('tool.call', async ($, e, next) => {
-    const id = dojo.spawn({ isElite: e.tool === 'Agent' })
+    const id = dojo.spawn({ isElite: e.tool === 'Agent', label: e.tool })
     try {
       const ran = await next(e)
       dojo.defeat({ id, isFailure: ran.deny !== undefined || ran.isError === true })

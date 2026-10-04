@@ -18,13 +18,16 @@ async function exists(path) {
 for (const plugin of marketplace.plugins) {
   const storyboard = resolve(root, 'tools/storyboards', `${plugin.name}.ts`)
   if (await exists(storyboard)) {
-    const result = spawnSync(process.execPath, ['--import', './tools/typescript-loader.mjs', 'tools/storyboard.mjs', plugin.name], { cwd: root, stdio: 'inherit' })
-    if (result.status !== 0) process.exit(1)
+    for (const tool of ['tools/storyboard.mjs', 'tools/animate.mjs']) {
+      const result = spawnSync(process.execPath, ['--import', './tools/typescript-loader.mjs', tool, plugin.name], { cwd: root, stdio: 'inherit' })
+      if (result.status !== 0) process.exit(1)
+    }
   }
-  const image = `../plugins/${plugin.name}/assets/preview.png`
+  const hasAnimation = await exists(resolve(root, 'plugins', plugin.name, 'assets/preview.gif'))
   const hasImage = await exists(resolve(root, 'plugins', plugin.name, 'assets/preview.png'))
+  const image = `../plugins/${plugin.name}/assets/preview.${hasAnimation ? 'gif' : 'png'}`
   sections.push(
-    `<section><h2>${plugin.name}</h2><p>${plugin.description}</p>${hasImage ? `<img src="${image}" alt="${plugin.name} preview">` : ''}</section>`,
+    `<section><h2>${plugin.name}</h2><p>${plugin.description}</p>${hasAnimation || hasImage ? `<img src="${image}" alt="${plugin.name} preview">` : ''}</section>`,
   )
 }
 
@@ -42,7 +45,7 @@ img { width: 100%; image-rendering: pixelated; border-radius: 12px; }
 </head>
 <body>
 <h1>Claude Code Mods</h1>
-<p>Each game preview is rendered by the mod's own simulation. The useful mods show captures from real sessions.</p>
+<p>Each game preview is an animation rendered by the mod's own simulation. The work mods show captures from real sessions.</p>
 ${sections.join('\n')}
 </body>
 </html>

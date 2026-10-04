@@ -22,26 +22,48 @@ Each decision is a card with:
 - a short quote or fact from the trace as evidence,
 - how sure the reading is (three dots).
 
-## Steering
+## How to use
 
-Every card has three buttons:
+1. Work with Claude as usual. After a turn with real work, the status line shows `◆ 3 decisions · /why`.
+2. Type `/why`. The lens opens on the latest turn and takes the keys.
+3. Read the cards. Press a key from the hint row to steer, or press Esc to go back to the prompt. The pane stays open.
 
-- **Keep doing this** saves a rule that tells Claude to repeat the behavior.
-- **Don't do this** saves a rule that tells Claude to stop.
-- **Ask why** asks Claude itself, through the session's own model and cached conversation, to explain the decision in its own words.
+Commands work at any time, also while the pane does not have the keys:
 
-Rules go into Claude's system prompt from the next request and in every later session. They are saved for this project. On the Rules tab you can make a rule global or remove it. No repository files change.
+- `/why`: open the lens on the latest turn.
+- `/why keep 2`: save a rule from card 2 that tells Claude to repeat the behavior.
+- `/why avoid 2`: save a rule from card 2 that tells Claude to stop.
+- `/why ask 2`: ask Claude, through the session's own model and cached conversation, to explain card 2 in its own words. The answer appears on the card.
+- `/why rules`: open the Rules tab.
 
-## Command
+Rules go into Claude's system prompt from the next request and in every later session. They are saved for this project. No repository files change.
 
-`/why` opens the lens on the latest turn. Use the arrow buttons to move between the last 20 turns. `/why rules` opens the Rules tab.
+## How to interact
+
+The hint row under the title always names the keys that work now.
+
+| Key | What it does |
+| --- | --- |
+| `1` to `5` | Pick a card. The picked card has a bright frame, and its buttons show their keys. |
+| `k` | Keep doing this: save the picked card's keep rule. |
+| `a` | Don't do this: save the picked card's avoid rule. |
+| `w` | Ask why: Claude explains the picked card in its own words. |
+| `p`, `n` | Show the earlier or later turn (the last 20 turns). |
+| `d`, `r` | Show the Decisions tab or the Rules tab. |
+| `x` | Close the lens. |
+| Tab, Enter | Move to the next button, and press it. |
+| Esc | Give the keys back to the prompt. The pane stays open. |
+| ctrl+x tab | Give the keys to the pane again. |
+
+On the Rules tab, each rule is numbered and has two buttons: "Make global" (or "This project only") and "Remove". Use Tab and Enter to press them.
 
 ## Settings
 
 Change these in `/plugin`:
 
 - `explainTurns` (on): read each turn with the helper model. This uses extra tokens.
-- `helperModel` (`haiku`): the model that reads each turn. Ask why always uses the session's model.
+- `helperModel` (`claude-sonnet-5-5`): the model that reads each turn. Ask why always uses the session's model.
+- `helperEffort` (`medium`): how hard the helper model thinks (`low`, `medium`, or `high`).
 
 Some models share no thinking text. The lens then works from what Claude wrote and the tool calls it made.
 

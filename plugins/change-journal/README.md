@@ -24,9 +24,35 @@ The page follows new changes as they happen. When you select something, it stops
 
 Changes made outside `Edit` and `Write` (a `sed` command, a formatter, or your own edits) show up after each turn as outside changes. Test commands appear with a pass or fail mark.
 
-## In the terminal
+## How to use
 
-The status line shows the files changed and the line counts. `/changes` opens a pane with the latest turns, `/changes open` opens the page, and `/changes path` prints where the page lives.
+1. Work with Claude as usual. The page opens in your browser on the first edit, and the status line shows `✎ 3 files +40 −12`.
+2. Type `/changes` to see the latest turns in the terminal. The pane opens with the keys.
+3. Press a number to see that edit's reason and diff, or `o` to open the page.
+
+Commands:
+
+- `/changes`: open the pane with the latest four turns and their edits.
+- `/changes open`: open the page in your browser.
+- `/changes path`: print where the page lives.
+
+## How to interact
+
+![Change Journal pane with an edit shown](assets/pane.png)
+
+The hint row under the title always names the keys that work now.
+
+| Key | What it does |
+| --- | --- |
+| `1` to `9` | Show that edit under the list: its reason and its first changed lines. Press the number again to hide it. |
+| `o` | Open the page. With an edit shown, the page opens on that edit's turn. |
+| `c` | Copy the page path. |
+| `x` | Close the pane. |
+| Tab, Enter | Move to the next row or button, and press it. |
+| Esc | Give the keys back to the prompt. The pane stays open. |
+| ctrl+x tab | Give the keys to the pane again. |
+
+On the page, click a ring or a dot on the rail to jump to a turn or an edit. Press "Follow new changes" to go back to the newest change.
 
 ## Settings
 
@@ -34,7 +60,8 @@ Change these in `/plugin`:
 
 - `autoOpen` (on): open the page on the first edit of a session.
 - `liveSummaries` (on): after each turn with edits, ask the helper model for a title, an explanation, the behavior flows, and missing reasons. This uses extra tokens.
-- `helperModel` (`haiku`): the model for those summaries.
+- `helperModel` (`claude-sonnet-5-5`): the model for those summaries.
+- `helperEffort` (`medium`): how hard the helper model thinks (`low`, `medium`, or `high`).
 
 ## Privacy
 

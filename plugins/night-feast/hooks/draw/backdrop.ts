@@ -19,7 +19,7 @@ import {
   WINDOW,
   WINDOW_DIM,
 } from '../art/scenery'
-import { CASTLE_WIDTH, FLOOR_TOP, STAGE_HEIGHT, VILLAGE_LEFT } from '../sim/constants'
+import { CASTLE_WIDTH, FLOOR_TOP, HOUSES, STAGE_HEIGHT, VILLAGE_LEFT } from '../sim/constants'
 import { moonPosition } from '../sim/sky'
 
 const STAR_COUNT = 18
@@ -97,11 +97,7 @@ function drawCastle(options: { bitmap: Bitmap; clockMs: number }): void {
 function drawVillage(options: { bitmap: Bitmap; clockMs: number }): void {
   const { bitmap } = options
   const limit = bitmap.width - CASTLE_WIDTH - 4
-  const houses = [
-    { sprite: COTTAGE, x: VILLAGE_LEFT + 1 },
-    { sprite: TOWNHOUSE, x: VILLAGE_LEFT + 10 },
-    { sprite: COTTAGE, x: VILLAGE_LEFT + 21 },
-  ]
+  const houses = HOUSES.map(house => ({ sprite: house.width === 9 ? TOWNHOUSE : COTTAGE, x: VILLAGE_LEFT + house.offset }))
   houses
     .filter(house => house.x + house.sprite.width <= limit)
     .forEach((house, index) => {
@@ -130,12 +126,15 @@ function drawGround(bitmap: Bitmap): void {
   }
 }
 
-export function drawBackdrop(options: { bitmap: Bitmap; percent: number | null; dawn: number; clockMs: number }): void {
+export function drawHeavens(options: { bitmap: Bitmap; percent: number | null; dawn: number; clockMs: number }): void {
   const { bitmap, dawn, clockMs } = options
   drawSky({ bitmap, dawn })
   drawStars({ bitmap, clockMs, dawn })
   drawMoon({ bitmap, percent: options.percent, dawn })
-  drawCastle({ bitmap, clockMs })
-  drawVillage({ bitmap, clockMs })
-  drawGround(bitmap)
+}
+
+export function drawTown(options: { bitmap: Bitmap; clockMs: number }): void {
+  drawCastle(options)
+  drawVillage(options)
+  drawGround(options.bitmap)
 }

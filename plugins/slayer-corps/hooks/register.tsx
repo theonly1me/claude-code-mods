@@ -1,6 +1,6 @@
 import type { EngineInterface, Register } from 'claude-code'
 
-import { configureStage, installStage, STAGE_HIDDEN_KEY, toggleStageHidden } from './shared/pixel/stage'
+import { configureStage, installStage, isStageShown } from './shared/pixel/stage'
 import { noop } from './shared/noop'
 import { FRAME_MS, MAX_COLUMNS, MIN_COLUMNS, STAGE_ROWS } from './sim/constants'
 import { createBattle } from './sim/battle'
@@ -14,6 +14,7 @@ const EVENT_POLL_MS = 500
 const STORY_TOAST_MS = 7000
 
 let battle = createBattle()
+let hasGreeted = false
 
 function toastFor(event: StoryEvent): string {
   const progress = battle.progress()
@@ -30,53 +31,73 @@ function toastFor(event: StoryEvent): string {
   return 'The Corps regroups. Failed commands gave the demon time to recover.'
 }
 
+function greeting(): string {
+  const progress = battle.progress()
+  const chapter = chapterAt(progress.chapter)
+  return `Chapter ${progress.chapter + 1}: ${chapter.place}. ${chapter.demon} has ${progress.demonHp} of ${maxHpFor(progress)} left. ${chapter.opening}`
+}
+
 async function tellEvents($: EngineInterface): Promise<void> {
+  const isShown = isStageShown()
+  if (isShown && !hasGreeted) {
+    hasGreeted = true
+    $.ui.toast(greeting(), { timeoutMs: STORY_TOAST_MS })
+  }
   const events = battle.takeEvents()
   if (events.length === 0) {
     return
   }
-  events.forEach(event => $.ui.toast(toastFor(event), { timeoutMs: STORY_TOAST_MS }))
+  if (isShown) {
+    events.forEach(event => $.ui.toast(toastFor(event), { timeoutMs: STORY_TOAST_MS }))
+  }
   await $.store.set(PROGRESS_KEY, battle.progress())
+}
+
+function report(): string[] {
+  const progress = battle.progress()
+  return [
+    statusLine(progress),
+    chapterAt(progress.chapter).opening,
+    `Lifetime: ${progress.attacks} attacks, ${progress.defeated} demons defeated, ${progress.dawns} dawns. /slayer-story tells the story so far.`,
+  ]
 }
 
 export const register: Register = on => {
   battle = createBattle()
+  hasGreeted = false
   configureStage({
-    rasterKey: 'slayer-corps:stage',
+    game: 'slayer-corps',
+    title: 'Slayer Corps',
+    command: { name: 'slayer', description: 'Show or hide the Slayer Corps fight (on, off, stats)', report },
     rows: STAGE_ROWS,
     minColumns: MIN_COLUMNS,
     maxColumns: MAX_COLUMNS,
     frameMs: FRAME_MS,
     scene: {
+      begin: noop,
       resize: columns => battle.resize(columns),
       tick: dtMs => battle.tick(dtMs),
       frame: () => battle.frame(),
-      summary: () => `slayer corps · ${statusLine(battle.progress())}`,
+      summary: () => statusLine(battle.progress()),
+      log: () => battle.log(),
     },
   })
   installStage(on)
 
   on('session.start', async ($, e, next) => {
     await $.command.register({
-      name: 'slayer',
-      description: 'Slayer Corps: show or hide the fight. "story" tells the story so far.',
-      argumentHint: '[story]',
+      name: 'slayer-story',
+      description: 'Slayer Corps: the story so far and how the fight works',
       immediate: true,
     })
     battle.restore(progressFromStore(await $.store.get(PROGRESS_KEY)))
-    if (e.isInteractive) {
-      const progress = battle.progress()
-      const chapter = chapterAt(progress.chapter)
-      $.ui.toast(
-        `Chapter ${progress.chapter + 1}: ${chapter.place}. ${chapter.demon} has ${progress.demonHp} of ${maxHpFor(progress)} left. ${chapter.opening}`,
-        { timeoutMs: STORY_TOAST_MS },
-      )
-    }
     $.clock.every(EVENT_POLL_MS, () => {
       tellEvents($).catch(noop)
     })
     return next(e)
   })
+
+  on('command.run', { command: 'slayer-story' }, async () => ({ text: storySoFar(battle.progress()) }))
 
   on('tool.call', async ($, e, next) => {
     const ran = await next(e)
@@ -104,15 +125,5 @@ export const register: Register = on => {
   on('session.end', async ($, e, next) => {
     await $.store.set(PROGRESS_KEY, battle.progress())
     return next(e)
-  })
-
-  on('command.run', { command: 'slayer' }, async ($, e) => {
-    if (e.args.trim().toLowerCase() === 'story') {
-      return { text: storySoFar(battle.progress()) }
-    }
-    const isHidden = toggleStageHidden()
-    await $.store.set(STAGE_HIDDEN_KEY, isHidden)
-    $.ui.invalidate('ui.render')
-    return { text: `${isHidden ? 'The fight is hidden.' : 'The fight is back.'} ${statusLine(battle.progress())}` }
   })
 }

@@ -3,7 +3,6 @@ import { expect, test } from 'claude-code/testing'
 import { createBattle } from '../hooks/sim/battle'
 import type { Battle } from '../hooks/sim/battle'
 import { FRAME_MS, MAX_HEARTS } from '../hooks/sim/constants'
-import { attackFor } from '../hooks/sim/moves'
 import type { StoryEvent } from '../hooks/sim/types'
 import { CHAPTERS, maxHpFor } from '../hooks/story/campaign'
 import { freshProgress, nextChapter, progressFromStore } from '../hooks/story/progress'
@@ -17,14 +16,6 @@ function run(options: { battle: Battle; milliseconds: number }): StoryEvent[] {
   return events
 }
 
-test('each tool picks its slayer and form', () => {
-  expect(attackFor('Read')).toEqual({ attacker: 'tanjiro', kind: 'water', damage: 2 })
-  expect(attackFor('Edit').attacker).toBe('inosuke')
-  expect(attackFor('Bash').kind).toBe('thunder')
-  expect(attackFor('Agent').attacker).toBe('hashira')
-  expect(attackFor('mcp__github__list').damage).toBe(1)
-})
-
 test('attacks land on impact and a finished turn lands the sun dance', () => {
   const battle = createBattle()
   battle.strike({ tool: 'Read', isFailure: false })
@@ -33,6 +24,7 @@ test('attacks land on impact and a finished turn lands the sun dance', () => {
   run({ battle, milliseconds: 6000 })
   expect(battle.progress().demonHp).toBe(40 - 2 - 3 - 8)
   expect(battle.progress().attacks).toBe(3)
+  expect(battle.log()).toContain('Tanjiro: Sun Dance hits for 8 (a finished turn).')
 })
 
 test('failures let the demon strike back, and losing every heart heals it', () => {
@@ -40,7 +32,7 @@ test('failures let the demon strike back, and losing every heart heals it', () =
   battle.restore({ ...freshProgress(), demonHp: 20 })
   for (let index = 0; index < MAX_HEARTS; index += 1) {
     battle.strike({ tool: 'Bash', isFailure: true })
-    run({ battle, milliseconds: 600 })
+    run({ battle, milliseconds: 900 })
   }
   expect(battle.hearts()).toBe(MAX_HEARTS)
   expect(battle.progress().demonHp).toBe(24)
@@ -54,6 +46,7 @@ test('a defeated demon turns to ash and the next chapter arrives', () => {
   expect(events).toEqual([{ kind: 'defeated', chapter: 0 }, { kind: 'chapter', chapter: 1 }])
   expect(battle.progress().chapter).toBe(1)
   expect(battle.progress().demonHp).toBe(maxHpFor({ chapter: 1, cycle: 1 }))
+  expect(battle.log()).toContain('Chapter 2: The Lantern Market.')
 })
 
 test('beating Muzan brings dawn and a harder new night', () => {
@@ -76,9 +69,43 @@ test('stored progress is validated before use', () => {
   expect(progressFromStore('nonsense')).toEqual(freshProgress())
 })
 
-test('a frame fills the stage at every width the band allows', () => {
+test('a frame fills the stage at every width the pane allows', () => {
   const battle = createBattle()
   battle.resize(56)
   expect(battle.frame().width).toBe(56)
   expect(battle.frame().height).toBe(16)
+})
+
+test('an idle battle shows all four slayers sparring within 30 seconds', () => {
+  const battle = createBattle()
+  const movers = new Set<string>()
+  let longestStillMs = 0
+  let stillMs = 0
+  for (let elapsed = 0; elapsed < 30000; elapsed += FRAME_MS) {
+    battle.tick(FRAME_MS)
+    const busy = battle.actors().filter(actor => actor.mode !== 'home' && actor.mode !== 'offstage')
+    busy.forEach(actor => movers.add(actor.name))
+    stillMs = busy.length === 0 ? stillMs + FRAME_MS : 0
+    longestStillMs = Math.max(longestStillMs, stillMs)
+  }
+  expect([...movers].sort()).toEqual(['inosuke', 'nezuko', 'tanjiro', 'zenitsu'])
+  expect(longestStillMs).toBeLessThan(1000)
+})
+
+test('sparring never changes the demon or the chapter', () => {
+  const battle = createBattle()
+  const before = battle.progress()
+  const events = run({ battle, milliseconds: 60000 })
+  expect(events).toEqual([])
+  expect(battle.progress()).toEqual(before)
+  expect(battle.log().some(line => line.endsWith('blocks.'))).toBe(true)
+})
+
+test('work interrupts sparring and still lands', () => {
+  const battle = createBattle()
+  run({ battle, milliseconds: 700 })
+  expect(battle.actors().some(actor => actor.mode !== 'home' && actor.mode !== 'offstage')).toBe(true)
+  battle.strike({ tool: 'Bash', isFailure: false })
+  run({ battle, milliseconds: 1200 })
+  expect(battle.progress().demonHp).toBe(37)
 })

@@ -24,8 +24,8 @@ test('ranks climb from Ronin to Shogun by lifetime kills', () => {
 
 test('kills add to the restored lifetime count', () => {
   const dojo = createDojo()
-  dojo.restore({ tally: { codex: 0, gemini: 0 }, lifetimeKills: 99 })
-  dojo.defeat({ id: dojo.spawn({ isElite: false }), isFailure: false })
+  dojo.restore({ tally: { codex: 0, gemini: 0, chatgpt: 0 }, lifetimeKills: 99 })
+  dojo.defeat({ id: dojo.spawn({ isElite: false, label: 'Read' }), isFailure: false })
 
   runFor({ dojo, milliseconds: 4000 })
 
@@ -35,12 +35,12 @@ test('kills add to the restored lifetime count', () => {
 
 test('three quick kills make a flurry and a lone kill does not', () => {
   const lone = createDojo()
-  lone.defeat({ id: lone.spawn({ isElite: false }), isFailure: false })
+  lone.defeat({ id: lone.spawn({ isElite: false, label: 'Read' }), isFailure: false })
   runFor({ dojo: lone, milliseconds: 4000 })
   expect(lone.flurries()).toBe(0)
 
   const burst = createDojo()
-  const ids = [1, 2, 3].map(() => burst.spawn({ isElite: false }))
+  const ids = [1, 2, 3].map(() => burst.spawn({ isElite: false, label: 'Read' }))
   ids.forEach(id => burst.defeat({ id, isFailure: false }))
   expect(runFor({ dojo: burst, milliseconds: 6000 })).toBe(3)
   expect(burst.flurries()).toBe(1)

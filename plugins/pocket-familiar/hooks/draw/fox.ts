@@ -1,11 +1,11 @@
 import { CREAM, EGG, EGG_CRACKS, FUR, INK, TAIL_OUTLINE, foxSprite, kitSprite } from '../art/fox'
-import type { EyeState } from '../art/fox'
 import { setPixel, stamp } from '../shared/pixel/bitmap'
 import type { Bitmap, Color } from '../shared/pixel/bitmap'
 import { toRadians } from '../shared/pixel/colors'
 import { BLINK_EVERY_MS, BLINK_MS, FOX_X, HOP_MS } from '../sim/constants'
 import { growthOf, hatchProgress } from '../sim/growth'
-import type { FamiliarState } from '../sim/types'
+import type { FoxPose } from '../sim/pose'
+import type { EyeState, FamiliarState } from '../sim/types'
 import { hillTop } from './backdrop'
 
 export type Placement = { x: number; top: number; width: number; height: number }
@@ -61,14 +61,15 @@ function tailAngles(count: number): number[] {
   return angles.sort((first, second) => Math.abs(second + 90) - Math.abs(first + 90))
 }
 
-function eyesOf(state: FamiliarState): EyeState {
+function eyesOf(options: { state: FamiliarState; pose: FoxPose }): EyeState {
+  const { state, pose } = options
   if (state.isSleeping) {
     return 'shut'
   }
   if (state.hopMs > 0) {
     return 'happy'
   }
-  return state.clockMs % BLINK_EVERY_MS < BLINK_MS ? 'shut' : 'open'
+  return pose.eyes ?? (state.clockMs % BLINK_EVERY_MS < BLINK_MS ? 'shut' : 'open')
 }
 
 function hopOffset(state: FamiliarState): number {
@@ -92,18 +93,20 @@ function drawEgg(options: { bitmap: Bitmap; state: FamiliarState }): Placement {
   return { x, top, width: EGG.width, height: EGG.height }
 }
 
-export function drawFamiliar(options: { bitmap: Bitmap; state: FamiliarState }): Placement {
-  const { bitmap, state } = options
+export function drawFamiliar(options: { bitmap: Bitmap; state: FamiliarState; pose: FoxPose }): Placement {
+  const { bitmap, state, pose } = options
   const growth = growthOf(state.lifetimeXp)
   if (growth.form === 'egg') {
     return drawEgg(options)
   }
-  const sprite = growth.form === 'kit' ? kitSprite(eyesOf(state)) : foxSprite(eyesOf(state))
-  const x = FOX_X + (growth.form === 'kit' ? 1 : 0)
-  const top = hillTop(FOX_X + 5) - sprite.height + hopOffset(state)
+  const eyes = eyesOf({ state, pose })
+  const sprite = growth.form === 'kit' ? kitSprite(eyes) : foxSprite(eyes)
+  const x = pose.x + (growth.form === 'kit' ? 1 : 0)
+  const top = hillTop(pose.x + 5) - sprite.height + hopOffset(state) + pose.lift
   const isKit = growth.form === 'kit'
+  const isResting = state.isSleeping || pose.isNapping
   tailAngles(growth.tails).forEach((angle, index) => {
-    const sway = Math.sin(state.clockMs / (isKit ? 420 : 760) + index * 0.9) * (state.isSleeping ? 2 : 5)
+    const sway = Math.sin(state.clockMs / (isKit ? 420 : 760) + index * 0.9) * (isResting ? 2 : 5) + pose.tailSpin
     drawTail({
       bitmap,
       stroke: {

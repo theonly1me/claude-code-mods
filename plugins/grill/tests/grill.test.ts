@@ -17,17 +17,20 @@ const BAND = {
 } as const
 const TASK = 'Add a cart total endpoint that sums every line in the cart'
 
-type Recorder = { clock: MockClock; toasts: string[]; submitted: string[] }
+type Recorder = { clock: MockClock; toasts: string[]; submitted: string[]; requests: { model: string; effort: unknown }[] }
 
 function engine(options: { on: On; store?: Readonly<Record<string, unknown>> }): Recorder {
   const { on } = options
-  const recorder: Recorder = { clock: mock.clock(on), toasts: [], submitted: [] }
+  const recorder: Recorder = { clock: mock.clock(on), toasts: [], submitted: [], requests: [] }
   mock.store(on, options.store ?? {})
   on('command.register', ($, event) => ({ value: { command: event.name } }))
   on('session.start', ($, event) => ({ cwd: event.cwd }))
   on('ui.render', ($, event) => $.ui.resolve(event).Box({ children: [] }))
   on('process.run', () => ({ value: { exitCode: 0, stdout: 'src/cart.ts\n', stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
-  on('model.complete', () => ({ value: { isAnswered: true, text: QUESTIONS, usage: USAGE } }))
+  on('model.complete', ($, event) => {
+    recorder.requests.push({ model: event.model, effort: event.effort })
+    return { value: { isAnswered: true, text: QUESTIONS, usage: USAGE } }
+  })
   on('prompt.submit', ($, event) => {
     recorder.submitted.push(event.text)
     return { text: event.text }
@@ -55,6 +58,7 @@ test('a task prompt starts a round whose answers reach the running turn', async 
 
   await recorder.clock.advance(500)
   expect(await band.find({ type: 'Text', text: 'Should an empty cart be deleted?' })).toBeDefined()
+  expect(recorder.requests).toEqual([{ model: 'claude-sonnet-5-5', effort: 'medium' }])
   await band.press({ key: 'option-1' })
 
   expect(recorder.toasts.at(-1)).toMatch(/Answer sent to Claude|could not take this mid-turn/)
@@ -75,6 +79,22 @@ test('answers given after the turn ends are sent as one prompt', async ($, on) =
   expect(recorder.toasts).toHaveLength(0)
   expect(await band.find({ type: 'Text', text: /finished before reading 1 of your answers/ })).toBeDefined()
   await band.press({ key: 'send' })
+  expect(recorder.submitted.at(-1)).toContain('- Should an empty cart be deleted? Keep it')
+})
+
+test('typing 1 and Enter after the turn sends the waiting answers as the prompt', async ($, on) => {
+  const recorder = engine({ on })
+  await $.session.start({ cwd: '/demo', surface: 'terminal', isInteractive: true })
+  await submitTask({ $, text: TASK })
+  await $.turn.start({ turnId: 't1', text: TASK })
+  await recorder.clock.advance(500)
+  await $.turn.complete({ answer: 'done', durationMs: 1, isAborted: false, turnId: 't1', reason: 'answer' })
+  const band = await $.ui.mount(BAND)
+  await band.press({ key: 'option-2' })
+  await band.press({ key: 'skip' })
+
+  await submitTask({ $, text: '1' })
+
   expect(recorder.submitted.at(-1)).toContain('- Should an empty cart be deleted? Keep it')
 })
 

@@ -5,6 +5,7 @@ export const COLORS = {
   keep: '#34d399',
   avoid: '#fb7185',
   muted: '#8b93a1',
+  frame: '#4b5563',
 } as const
 
 const CONFIDENCE_GLYPHS: Record<Confidence, string> = { high: '●●●', medium: '●●○', low: '●○○' }

@@ -1,3 +1,5 @@
+import { DEFAULT_HELPER_MODEL } from './helper'
+import type { Helper } from './helper'
 import { compact } from './trace'
 import type { Decision, LensTab, LensTurn, Rule, ToolOutcome } from './types'
 
@@ -9,10 +11,11 @@ type Lens = {
   currentId: number | undefined
   selectedId: number | undefined
   isFollowing: boolean
+  selectedNumber: number
   tab: LensTab
   rules: Rule[]
   project: string
-  helperModel: string
+  helper: Helper
   isAnalysisOn: boolean
   nextId: number
 }
@@ -22,16 +25,17 @@ const lens: Lens = {
   currentId: undefined,
   selectedId: undefined,
   isFollowing: true,
+  selectedNumber: 1,
   tab: 'decisions',
   rules: [],
   project: '',
-  helperModel: 'haiku',
+  helper: { helperModel: DEFAULT_HELPER_MODEL, helperEffort: 'medium' },
   isAnalysisOn: true,
   nextId: 1,
 }
 
-export function configureLens(options: { helperModel: string; isAnalysisOn: boolean }): void {
-  lens.helperModel = options.helperModel
+export function configureLens(options: { helper: Helper; isAnalysisOn: boolean }): void {
+  lens.helper = options.helper
   lens.isAnalysisOn = options.isAnalysisOn
 }
 
@@ -93,6 +97,7 @@ export function completeLensTurn(options: { answer: string }): LensTurn | undefi
   lens.currentId = undefined
   if (lens.isFollowing) {
     lens.selectedId = turn.id
+    lens.selectedNumber = 1
   }
   return turn
 }
@@ -120,12 +125,24 @@ export function moveSelection(step: number): void {
   if (target) {
     lens.selectedId = target.id
     lens.isFollowing = target === lens.turns.at(-1)
+    lens.selectedNumber = 1
   }
 }
 
 export function followLatest(): void {
   lens.isFollowing = true
   lens.selectedId = lens.turns.at(-1)?.id
+  lens.selectedNumber = 1
+}
+
+export function selectCard(number: number): void {
+  lens.selectedNumber = number
+}
+
+export function decisionNumbered(number: number): { turn: LensTurn; decision: Decision } | undefined {
+  const turn = selectedTurn()
+  const decision = turn?.status === 'ready' ? turn.decisions[number - 1] : undefined
+  return turn && decision ? { turn, decision } : undefined
 }
 
 export function showTab(tab: LensTab): void {

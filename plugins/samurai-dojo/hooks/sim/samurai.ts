@@ -22,6 +22,7 @@ export function createSamurai(): Samurai {
     variant: 'down',
     hasStruck: false,
     isCheerRequested: false,
+    activity: 'guard',
   }
 }
 

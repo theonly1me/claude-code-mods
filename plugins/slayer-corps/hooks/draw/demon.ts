@@ -55,7 +55,8 @@ export function drawDemon(options: {
   const sprite = demonSprite({ shape: chapter.shape, look: chapter.look })
   const isFloating = chapter.shape === 'lantern' || chapter.shape === 'spider'
   const bob = isFloating ? Math.round(Math.sin(clockMs / 380) - 1) : 0
-  const x = Math.round(options.x)
+  const sway = isFloating ? 0 : Math.round(Math.sin(clockMs / 900))
+  const x = Math.round(options.x) + sway
   const y = GROUND_TOP - sprite.height + bob
   if (options.isTrueForm && options.dissolve === 0) {
     drawWhips({ bitmap, x, y, clockMs })

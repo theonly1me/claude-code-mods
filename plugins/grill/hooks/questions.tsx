@@ -31,6 +31,13 @@ function keyFor(entry: LabeledChoice): string {
   return entry.choice.kind === 'answer' ? `option-${entry.digit}` : entry.choice.kind
 }
 
+function takeAnswersToSend(): string | undefined {
+  const answers = undeliveredAnswers()
+  markAllDelivered()
+  dismissRound()
+  return answers.length > 0 ? answersMessage(answers) : undefined
+}
+
 async function deliver($: EngineInterface, options: { answer: string }): Promise<void> {
   const answer = answerCurrent({ answer: options.answer, isDelivered: grillView().isWorking })
   if (answer?.isDelivered) {
@@ -58,12 +65,10 @@ async function perform($: EngineInterface, options: { choice: Choice }): Promise
     return
   }
   if (choice.kind === 'send') {
-    const answers = undeliveredAnswers()
-    markAllDelivered()
-    dismissRound()
+    const message = takeAnswersToSend()
     $.ui.invalidate('ui.render')
-    if (answers.length > 0) {
-      await $.prompt.submit({ text: answersMessage(answers) })
+    if (message !== undefined) {
+      await $.prompt.submit({ text: message })
     }
     return
   }
@@ -78,6 +83,11 @@ async function perform($: EngineInterface, options: { choice: Choice }): Promise
 export function installQuestions(on: On): void {
   on('prompt.submit', async ($, e, next) => {
     const picked = e.origin.kind === 'composer' ? choiceForDigit({ choices: currentChoices(), text: e.text }) : undefined
+    if (picked?.choice.kind === 'send') {
+      const message = takeAnswersToSend()
+      $.ui.invalidate('ui.render')
+      return message === undefined ? { drop: `Grill: ${picked.label}` } : next({ ...e, text: message })
+    }
     if (picked) {
       await perform($, { choice: picked.choice })
       return { drop: `Grill: ${picked.label}` }

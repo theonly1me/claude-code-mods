@@ -76,3 +76,20 @@ export function advanceParticles(options: { particles: Particle[]; dtMs: number 
     })
     .filter(particle => particle.ageMs < particle.lifeMs)
 }
+
+export function parryBurst(options: { x: number; y: number; seed: number }): Particle[] {
+  return Array.from({ length: 14 }, (_, index) => {
+    const angle = Math.PI * 0.5 + (Math.PI * index) / 13
+    const speed = 30 + ((options.seed + index * 13) % 5) * 5
+    return {
+      kind: 'parry' as const,
+      x: options.x,
+      y: options.y + (index % 3) - 1,
+      velocityX: Math.cos(angle) * speed,
+      velocityY: Math.sin(angle) * speed * 0.6 - 10,
+      ageMs: 0,
+      lifeMs: 360,
+      color: [0xffffff, 0xfff3b0, 0xffd60a][index % 3] ?? 0xffffff,
+    }
+  })
+}

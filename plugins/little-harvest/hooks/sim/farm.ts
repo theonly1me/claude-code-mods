@@ -1,71 +1,85 @@
 import { BARN_DOOR_X } from '../art/barn'
+import { PRODUCE_COLORS } from '../art/crops'
 import { drawScene } from '../draw/scene'
 import { clearBitmap, createBitmap } from '../shared/pixel/bitmap'
 import type { Bitmap } from '../shared/pixel/bitmap'
+import { createWeather } from '../shared/pixel/weather'
 import {
   BARN_MARGIN,
   BARN_WIDTH,
+  CHEER_MS,
   FIELD_LEFT,
-  HARVEST_MS,
+  HOE_MS,
+  LOG_LIMIT,
   MAX_COLUMNS,
   PLOT_WIDTH,
-  POP_MS,
   STAGE_HEIGHT,
-  STORM_MS,
-  SUN_RAYS_MS,
+  TREE_CROWN,
+  TREE_X,
 } from './constants'
-import { cropForPath, stageForLines } from './crops'
-import { advanceFarmer, cheerFarmer, createFarmer, sendFarmer } from './farmer'
-import type { CropKind, Cloud, FarmSummary, Harvest, Plot, PlotView, Pop, Weather } from './types'
+import { createCalendar } from './calendar'
+import { createCritters } from './critters'
+import { CROP_LABELS } from './crops'
+import { createDirector } from './director'
+import { createEffects } from './effects'
+import { advanceFarmer, assignStep, createFarmer, isFree } from './farmer'
+import { createField } from './field'
+import type { FarmerTask, Plot } from './types'
 
-const PRODUCE: Record<CropKind, number> = {
-  pumpkin: 0xf08a24,
-  corn: 0xf7d038,
-  sunflower: 0xffd23f,
-  tulip: 0xe2435c,
-  wheat: 0xf0d277,
-  carrot: 0xff8c2a,
-}
-
-export function createFarm() {
-  const plots = new Map<string, Plot>()
+export function createFarm(options: { seed?: number } = {}) {
+  const seed = options.seed ?? 7
+  const field = createField()
   const farmer = createFarmer()
-  const clouds: Cloud[] = [
-    { x: 6, y: 2, width: 9, speed: 1.1 },
-    { x: 34, y: 4, width: 7, speed: 0.7 },
-    { x: 58, y: 1, width: 11, speed: 0.9 },
-  ]
-  let order = 0
-  let weather: Weather = { kind: 'clear', ms: 0 }
-  let pops: Pop[] = []
-  let harvest: Harvest | undefined
+  const director = createDirector(seed)
+  const critters = createCritters(seed + 1)
+  const weather = createWeather({ seed: seed + 2 })
+  const effects = createEffects()
   let hour = 12
   let columns = MAX_COLUMNS
   let bitmap: Bitmap = createBitmap({ width: columns, height: STAGE_HEIGHT })
-  let sessionBushels = 0
-  let lifetimeBushels = 0
-  let hasPassedThisTurn = false
+  const calendar = createCalendar()
+  let lines: string[] = []
 
-  function slotCount(): number {
-    return Math.max(1, Math.floor((columns - BARN_WIDTH - BARN_MARGIN - FIELD_LEFT) / PLOT_WIDTH))
+  function note(line: string): void {
+    lines = [line, ...lines].slice(0, LOG_LIMIT)
   }
 
-  function visible(): PlotView[] {
-    const newest = [...plots.values()].sort((first, second) => second.touchedOrder - first.touchedOrder)
-    return newest
-      .slice(0, slotCount())
-      .sort((first, second) => first.plantedOrder - second.plantedOrder)
-      .map((plot, index) => ({ plot, x: FIELD_LEFT + index * PLOT_WIDTH }))
+  function barnX(): number {
+    return columns - BARN_WIDTH
   }
 
-  function popAt(options: { plot: Plot; isToBarn: boolean; delayMs: number }): void {
-    const view = visible().find(candidate => candidate.plot === options.plot)
-    if (!view) {
+  function work(step: { task: FarmerTask; x: number; durationMs: number }): void {
+    director.clear()
+    assignStep({ farmer, step: { ...step, isCarrying: false, isWork: true, isFacingLeft: true } })
+  }
+
+  function popFor(popOptions: { plot: Plot; x: number | undefined; isToBarn: boolean; delayMs: number }): void {
+    if (popOptions.x === undefined) {
       return
     }
-    const fromX = view.x + 2
-    const toX = options.isToBarn ? columns - BARN_WIDTH + BARN_DOOR_X : fromX
-    pops.push({ fromX, toX, ageMs: -options.delayMs, color: PRODUCE[options.plot.crop] })
+    const fromX = popOptions.x + 2
+    const toX = popOptions.isToBarn ? barnX() + BARN_DOOR_X : fromX
+    effects.pop({ fromX, toX, ageMs: -popOptions.delayMs, color: PRODUCE_COLORS[popOptions.plot.crop] })
+  }
+
+  function planAmbient(): void {
+    const plan = director.next({
+      plots: field.visible(columns).map(view => ({ x: view.x, label: CROP_LABELS[view.plot.crop] })),
+      fieldLeft: FIELD_LEFT,
+      fieldRight: barnX() - BARN_MARGIN,
+      barnX: barnX(),
+      treeX: TREE_X,
+      chickensX: critters.chickensX(),
+      crowX: critters.perchedCrowX(),
+      scarecrowX: field.scarecrowX(columns),
+    })
+    assignStep({ farmer, step: plan.step })
+    if (plan.line) {
+      note(plan.line)
+    }
+    if (plan.step.task === 'feed') {
+      critters.scatterFeed({ x: plan.step.x, durationMs: 6000 })
+    }
   }
 
   return {
@@ -76,104 +90,107 @@ export function createFarm() {
       }
     },
 
+    begin(startMs: number): void {
+      calendar.begin(startMs)
+    },
+
     setHour(nextHour: number): void {
       hour = ((nextHour % 24) + 24) % 24
     },
 
     restore(saved: { lifetimeBushels: number }): void {
-      lifetimeBushels = saved.lifetimeBushels
+      field.restore(saved)
     },
 
-    tend(options: { path: string; lines: number }): void {
-      order += 1
-      const plot = plots.get(options.path) ?? {
-        path: options.path,
-        crop: cropForPath(options.path),
-        lines: 0,
-        isWilted: false,
-        plantedOrder: order,
-        touchedOrder: order,
+    tend(change: { path: string; lines: number; by?: 'claude' | 'you' }): void {
+      const { plot, x, didRipen } = field.tend({ ...change, columns })
+      if (x !== undefined) {
+        work({ task: 'hoe', x: x + PLOT_WIDTH - 1, durationMs: HOE_MS })
       }
-      const wasRipe = stageForLines(plot.lines) === 'ripe'
-      plot.lines += Math.max(0, options.lines)
-      plot.touchedOrder = order
-      plots.set(options.path, plot)
-      const view = visible().find(candidate => candidate.plot === plot)
-      if (view) {
-        sendFarmer({ farmer, x: view.x + PLOT_WIDTH - 1 })
+      if (didRipen) {
+        popFor({ plot, x, isToBarn: false, delayMs: 0 })
       }
-      if (!wasRipe && stageForLines(plot.lines) === 'ripe') {
-        popAt({ plot, isToBarn: false, delayMs: 0 })
-      }
+      note(`${change.by === 'you' ? 'You changed' : 'Claude tended'} ${change.path}, ${change.lines} ${change.lines === 1 ? 'line' : 'lines'}`)
     },
 
-    testRan(options: { isPassing: boolean }): void {
-      weather = { kind: options.isPassing ? 'sunny' : 'storm', ms: 0 }
-      plots.forEach(plot => {
-        if (options.isPassing) {
-          plot.isWilted = false
-        } else if (plot.crop === 'pumpkin') {
-          plot.isWilted = true
-        }
-      })
-      hasPassedThisTurn = hasPassedThisTurn || options.isPassing
+    testRan(result: { isPassing: boolean }): void {
+      effects.testRan(result)
+      field.testRan(result)
+      note(result.isPassing ? 'Tests passed: sun on the field' : 'Tests failed: a storm wilts the pumpkins')
     },
 
     beginTurn(): void {
-      hasPassedThisTurn = false
+      field.beginTurn()
     },
 
     endTurn(): number {
-      const ripe = [...plots.values()].filter(plot => !plot.isWilted && stageForLines(plot.lines) === 'ripe')
-      if (!hasPassedThisTurn || ripe.length === 0) {
+      const ripe = field.harvest(columns)
+      if (ripe.length === 0) {
         return 0
       }
-      hasPassedThisTurn = false
-      ripe.forEach((plot, index) => {
-        popAt({ plot, isToBarn: true, delayMs: index * 120 })
-        plot.lines = 0
-      })
-      sessionBushels += ripe.length
-      lifetimeBushels += ripe.length
-      harvest = { count: ripe.length, ageMs: 0 }
-      cheerFarmer(farmer)
+      ripe.forEach((entry, index) => popFor({ ...entry, isToBarn: true, delayMs: index * 120 }))
+      effects.harvested(ripe.length)
+      work({ task: 'cheer', x: farmer.x, durationMs: CHEER_MS })
+      note(`Harvested ${ripe.length} ${ripe.length === 1 ? 'crop' : 'crops'} into the barn`)
       return ripe.length
     },
 
     tick(dtMs: number): void {
-      advanceFarmer({ farmer, dtMs, strollRange: Math.max(8, columns - BARN_WIDTH - 12) })
-      weather = weather.kind === 'clear' ? weather : { ...weather, ms: weather.ms + dtMs }
-      const limit = weather.kind === 'storm' ? STORM_MS : SUN_RAYS_MS
-      if (weather.kind !== 'clear' && weather.ms >= limit) {
-        weather = { kind: 'clear', ms: 0 }
+      const newSeason = calendar.advance(dtMs)
+      if (newSeason) {
+        note(`${newSeason.label} comes to the farm`)
       }
-      pops = pops.map(pop => ({ ...pop, ageMs: pop.ageMs + dtMs })).filter(pop => pop.ageMs < POP_MS)
-      harvest = harvest && harvest.ageMs + dtMs < HARVEST_MS ? { ...harvest, ageMs: harvest.ageMs + dtMs } : undefined
-      clouds.forEach(cloud => {
-        cloud.x += (cloud.speed * dtMs) / 1000
-        if (cloud.x > columns + 2) {
-          cloud.x = -cloud.width - 2
-        }
+      const season = calendar.season()
+      advanceFarmer({ farmer, dtMs })
+      if (isFree(farmer)) {
+        planAmbient()
+      }
+      if (farmer.mode === 'shoo' && farmer.modeMs > 300) {
+        critters.shooCrow()
+      }
+      critters.advance({
+        dtMs,
+        columns,
+        barnX: barnX(),
+        fieldLeft: FIELD_LEFT,
+        perchSpots: field.visible(columns).map(view => view.x + 1),
       })
+      weather.advance({ dtMs, season, width: columns, groundY: STAGE_HEIGHT, sources: [TREE_CROWN] })
+      effects.advance({ dtMs, columns })
     },
 
     plots(): Plot[] {
-      return [...plots.values()].sort((first, second) => first.plantedOrder - second.plantedOrder)
+      return field.plots()
     },
 
-    summary(): FarmSummary {
-      const all = [...plots.values()]
-      return {
-        plots: all.length,
-        ripe: all.filter(plot => stageForLines(plot.lines) === 'ripe').length,
-        sessionBushels,
-        lifetimeBushels,
-      }
+    summary() {
+      return field.summary()
+    },
+
+    calendar,
+
+    activity(): { task: FarmerTask; isWork: boolean } {
+      return { task: farmer.step?.task ?? 'idle', isWork: farmer.step?.isWork === true }
+    },
+
+    log(): readonly string[] {
+      return lines
     },
 
     frame(): Bitmap {
       clearBitmap(bitmap)
-      drawScene({ bitmap, hour, clouds, weather, views: visible(), farmer, pops, harvest, bushels: lifetimeBushels })
+      drawScene({
+        bitmap,
+        hour,
+        season: calendar.season(),
+        effects: effects.view(),
+        views: field.visible(columns),
+        scarecrowX: field.scarecrowX(columns),
+        farmer,
+        critters,
+        weather,
+        bushels: field.summary().lifetimeBushels,
+      })
       return bitmap
     },
   }

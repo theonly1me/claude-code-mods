@@ -1,0 +1,36 @@
+{
+  "name": "unslop",
+  "version": "0.1.0",
+  "description": "Finds AI slop in Claude's changes (dashes, comment blocks, comments that repeat the code, tests that assert nothing, filler phrases) and tells Claude to remove it. Shows what was unslopped.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "userConfig": {
+    "chatStyle": {
+      "type": "boolean",
+      "title": "Plain chat style",
+      "description": "Ask Claude to write chat replies in ASD-STE100 Simplified Technical English (about 80%), with no em or en dashes and no filler.",
+      "default": true
+    },
+    "modelPass": {
+      "type": "boolean",
+      "title": "Model check",
+      "description": "After each edit, ask the detect model about slop that rules cannot judge, such as tests that assert nothing real. One small call per edit.",
+      "default": true
+    },
+    "detectModel": {
+      "type": "string",
+      "title": "Detect model",
+      "description": "The model alias or id for the model check.",
+      "default": "haiku"
+    },
+    "commentBlockLines": {
+      "type": "number",
+      "title": "Comment block size",
+      "description": "Flag a run of added comment lines this long or longer.",
+      "default": 4
+    }
+  }
+}

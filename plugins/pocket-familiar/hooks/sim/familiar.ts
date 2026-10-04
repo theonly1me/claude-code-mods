@@ -1,18 +1,24 @@
 import { drawScene } from '../draw/scene'
 import { clearBitmap, createBitmap } from '../shared/pixel/bitmap'
 import type { Bitmap } from '../shared/pixel/bitmap'
+import { advanceAmbient, startAmbient } from './ambient'
 import { advance, createState, noteToolEnd, noteToolStart, noteTurnEnd, noteTurnStart, noteUserActive } from './care'
 import { MAX_COLUMNS, STAGE_HEIGHT } from './constants'
 import { growthOf, nextGrowthOf } from './growth'
+import { logLines } from './log'
+import { reportOf, summaryOf } from './report'
 import { afterAway, moodOf } from './stats'
-import type { Growth, Mood, SavedFamiliar, ToolKind } from './types'
+import type { AmbientKind, Growth, Mood, SavedFamiliar, ToolKind } from './types'
 
 export function createFamiliar() {
   const state = createState()
-  let columns = MAX_COLUMNS
-  let bitmap = createBitmap({ width: columns, height: STAGE_HEIGHT })
+  let bitmap = createBitmap({ width: MAX_COLUMNS, height: STAGE_HEIGHT })
 
   return {
+    begin(epochMs: number): void {
+      state.ambient.seed = Math.floor(epochMs % 2147483647) || 1
+    },
+
     restore(options: { saved: SavedFamiliar; now: number }): void {
       state.stats = afterAway(options)
       state.lifetimeXp = options.saved.lifetimeXp
@@ -46,8 +52,13 @@ export function createFamiliar() {
       noteUserActive(state)
     },
 
+    play(kind: AmbientKind): void {
+      startAmbient({ state, kind })
+    },
+
     tick(options: { dtMs: number }): void {
       advance({ state, dtMs: options.dtMs })
+      advanceAmbient({ state, dtMs: options.dtMs })
     },
 
     takeEvolutions(): Growth[] {
@@ -70,11 +81,23 @@ export function createFamiliar() {
       return nextGrowthOf(state.lifetimeXp)
     },
 
-    resize(nextColumns: number): void {
-      if (nextColumns === columns) {
+    summary(): string {
+      return summaryOf(state)
+    },
+
+    report(): string[] {
+      return reportOf(state)
+    },
+
+    log(): string[] {
+      return logLines(state.log)
+    },
+
+    resize(columns: number): void {
+      if (columns === state.width) {
         return
       }
-      columns = nextColumns
+      state.width = columns
       bitmap = createBitmap({ width: columns, height: STAGE_HEIGHT })
     },
 

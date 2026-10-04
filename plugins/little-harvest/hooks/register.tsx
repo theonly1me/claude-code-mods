@@ -1,8 +1,8 @@
 import type { EngineInterface, Register } from 'claude-code'
 
 import { noop } from './shared/noop'
+import { configureStage, installStage } from './shared/pixel/stage'
 import { plural } from './shared/text/meter'
-import { configureStage, installStage, STAGE_HIDDEN_KEY, toggleStageHidden } from './shared/pixel/stage'
 import { FRAME_MS, MAX_COLUMNS, MIN_COLUMNS, STAGE_ROWS } from './sim/constants'
 import { CROP_LABELS, stageForLines } from './sim/crops'
 import { farm, parseNumstat, projectRoot, setProjectRoot, userChanges } from './sim/ledger'
@@ -12,9 +12,15 @@ const LIFETIME_KEY = 'lifetimeBushels'
 const GIT_POLL_MS = 20000
 const HOUR_POLL_MS = 60000
 
+function seasonLine(): string {
+  const next = farm.calendar.next()
+  const minutes = Math.max(1, Math.ceil(next.remainingMs / 60000))
+  return `${farm.calendar.season().label}, ${next.label.toLowerCase()} in ${minutes} min`
+}
+
 function summary(): string {
   const { plots, ripe, lifetimeBushels } = farm.summary()
-  return `little harvest · ${plots} plots · ${ripe} ripe · ${lifetimeBushels} bushels`
+  return `${plural({ count: plots, word: 'plot' })}  ${ripe} ripe  ${plural({ count: lifetimeBushels, word: 'bushel' })}  ${seasonLine()}`
 }
 
 function plotLines(): string[] {
@@ -31,6 +37,15 @@ function plotLines(): string[] {
   ]
 }
 
+function report(): string[] {
+  const { sessionBushels, lifetimeBushels } = farm.summary()
+  return [
+    `Barn: ${plural({ count: sessionBushels, word: 'bushel' })} this session, ${lifetimeBushels} in all.`,
+    `Season: ${seasonLine()}.`,
+    ...plotLines(),
+  ]
+}
+
 async function syncHour($: EngineInterface): Promise<void> {
   const date = new Date(await $.clock.now())
   farm.setHour(date.getHours() + date.getMinutes() / 60)
@@ -43,21 +58,29 @@ async function pollGit($: EngineInterface): Promise<void> {
   if (!result || result.exitCode !== 0) {
     return
   }
-  userChanges(parseNumstat(result.stdout)).forEach(change => farm.tend(change))
+  userChanges(parseNumstat(result.stdout)).forEach(change => farm.tend({ ...change, by: 'you' }))
 }
 
 export const register: Register = on => {
   configureStage({
-    rasterKey: 'little-harvest:stage',
+    game: 'little-harvest',
+    title: 'Little Harvest',
+    command: {
+      name: 'farm',
+      description: 'Show or hide Little Harvest (on, off, stats lists every plot)',
+      report,
+    },
     rows: STAGE_ROWS,
     minColumns: MIN_COLUMNS,
     maxColumns: MAX_COLUMNS,
     frameMs: FRAME_MS,
     scene: {
+      begin: epochMs => farm.begin(epochMs),
       resize: columns => farm.resize(columns),
       tick: dtMs => farm.tick(dtMs),
       frame: () => farm.frame(),
       summary,
+      log: () => farm.log(),
     },
   })
   installStage(on)
@@ -65,11 +88,6 @@ export const register: Register = on => {
 
   on('session.start', async ($, e, next) => {
     setProjectRoot(e.cwd)
-    await $.command.register({
-      name: 'farm',
-      description: 'Show or hide Little Harvest and list every plot your changes planted',
-      immediate: true,
-    })
     farm.restore({ lifetimeBushels: Number((await $.store.get(LIFETIME_KEY)) ?? 0) })
     await syncHour($)
     await pollGit($)
@@ -80,20 +98,6 @@ export const register: Register = on => {
       pollGit($).catch(noop)
     })
     return next(e)
-  })
-
-  on('command.run', { command: 'farm' }, async $ => {
-    const isHidden = toggleStageHidden()
-    await $.store.set(STAGE_HIDDEN_KEY, isHidden)
-    $.ui.invalidate('ui.render')
-    const { sessionBushels, lifetimeBushels } = farm.summary()
-    return {
-      text: [
-        isHidden ? 'The farm is closed.' : 'The farm is open.',
-        `Barn: ${plural({ count: sessionBushels, word: 'bushel' })} this session, ${lifetimeBushels} in all.`,
-        ...plotLines(),
-      ].join('\n'),
-    }
   })
 
   on('turn.start', ($, e, next) => {

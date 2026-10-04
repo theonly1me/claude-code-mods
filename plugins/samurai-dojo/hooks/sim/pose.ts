@@ -21,7 +21,9 @@ type Segment = readonly [number, number]
 const GUARD_ANGLE = -55
 const DASH_ANGLE = -8
 const CHEER_ANGLE = -80
+const MEDITATE_ANGLE = 4
 const BREATH_MS = 420
+const MEDITATE_BREATH_MS = 1600
 
 const SLASH_KEYFRAMES: Record<
   SlashVariant,
@@ -72,7 +74,7 @@ function slashArc(options: {
   }
 }
 
-function slashPose(options: {
+export function slashPose(options: {
   variant: SlashVariant
   progress: number
   base: SamuraiPose
@@ -99,8 +101,27 @@ function trainingPose(options: { samurai: Samurai; base: SamuraiPose }): Samurai
     }
     remaining -= segment.ms
   }
-  const isBreathingIn = Math.floor(samurai.trainingMs / BREATH_MS) % 2 === 1
-  return { ...base, isLowered: isBreathingIn }
+  return guardPose({ samurai, base })
+}
+
+function guardPose(options: { samurai: Samurai; base: SamuraiPose }): SamuraiPose {
+  const isBreathingIn = Math.floor(options.samurai.trainingMs / BREATH_MS) % 2 === 1
+  return { ...options.base, isLowered: isBreathingIn }
+}
+
+function meditatePose(options: { samurai: Samurai; base: SamuraiPose }): SamuraiPose {
+  const isExhaling = Math.floor(options.samurai.trainingMs / MEDITATE_BREATH_MS) % 2 === 1
+  return {
+    ...options.base,
+    isLowered: true,
+    isSquinting: true,
+    swordAngle: MEDITATE_ANGLE,
+    offsetY: isExhaling ? 2 : 1,
+  }
+}
+
+export function neutralPose(): SamuraiPose {
+  return { isLowered: false, isSquinting: false, swordAngle: GUARD_ANGLE, arc: null, offsetX: 0, offsetY: 0 }
 }
 
 export function samuraiPoseOf(samurai: Samurai): SamuraiPose {
@@ -113,8 +134,14 @@ export function samuraiPoseOf(samurai: Samurai): SamuraiPose {
     offsetX: isHurt ? -2 : 0,
     offsetY: 0,
   }
-  if (samurai.mode === 'train') {
+  if (samurai.mode === 'train' && samurai.activity === 'meditate' && !isHurt) {
+    return meditatePose({ samurai, base })
+  }
+  if (samurai.mode === 'train' && samurai.activity === 'kata') {
     return trainingPose({ samurai, base })
+  }
+  if (samurai.mode === 'train') {
+    return guardPose({ samurai, base })
   }
   if (samurai.mode === 'dash') {
     return { ...base, isLowered: true, swordAngle: DASH_ANGLE }

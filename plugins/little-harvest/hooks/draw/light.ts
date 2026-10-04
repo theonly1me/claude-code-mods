@@ -1,5 +1,6 @@
 import type { Color, Tint } from '../shared/pixel/bitmap'
 import { mixColors } from '../shared/pixel/colors'
+import type { Season, SeasonPalette } from '../shared/pixel/seasons'
 
 type Keyframe = { hour: number; top: Color; middle: Color; bottom: Color; darkness: number }
 
@@ -46,7 +47,7 @@ export function lightAt(hour: number): Light {
     middle: mixColors({ from: from.middle, to: to.middle, amount }),
     bottom: mixColors({ from: from.bottom, to: to.bottom, amount }),
     darkness,
-    tint: color => mixColors({ from: color, to: NIGHT_INK, amount: darkness * 0.55 }),
+    tint: color => mixColors({ from: color, to: NIGHT_INK, amount: darkness * 0.45 }),
   }
 }
 
@@ -56,4 +57,34 @@ export function skyRow(options: { light: Light; y: number; height: number }): Co
   return progress < 0.5
     ? mixColors({ from: light.top, to: light.middle, amount: progress * 2 })
     : mixColors({ from: light.middle, to: light.bottom, amount: (progress - 0.5) * 2 })
+}
+
+export function seasonalLight(options: { hour: number; season: Season }): Light {
+  const light = lightAt(options.hour)
+  const { palette } = options.season
+  const amount = 0.4 * (1 - light.darkness * 0.6)
+  return {
+    ...light,
+    top: mixColors({ from: light.top, to: palette.skyTop, amount }),
+    middle: mixColors({ from: light.middle, to: mixColors({ from: palette.skyTop, to: palette.skyLow, amount: 0.5 }), amount }),
+    bottom: mixColors({ from: light.bottom, to: palette.skyLow, amount }),
+  }
+}
+
+export function tintPalette(options: { palette: SeasonPalette; light: Light }): SeasonPalette {
+  const { palette, light } = options
+  const [firstParticle, ...otherParticles] = palette.particles
+  return {
+    ground: light.tint(palette.ground),
+    groundShade: light.tint(palette.groundShade),
+    foliageLight: light.tint(palette.foliageLight),
+    foliage: light.tint(palette.foliage),
+    foliageDark: light.tint(palette.foliageDark),
+    accent: light.tint(palette.accent),
+    trunk: light.tint(palette.trunk),
+    skyTop: palette.skyTop,
+    skyLow: palette.skyLow,
+    moon: palette.moon,
+    particles: [light.tint(firstParticle), ...otherParticles.map(light.tint)],
+  }
 }

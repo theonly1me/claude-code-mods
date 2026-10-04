@@ -46,7 +46,7 @@ function drawSleep(options: { bitmap: Bitmap; placement: Placement; clockMs: num
   stamp({ target: options.bitmap, source: sprite, x, y })
 }
 
-export function drawDetails(options: { bitmap: Bitmap; state: FamiliarState; placement: Placement }): void {
+export function drawDetails(options: { bitmap: Bitmap; state: FamiliarState; placement: Placement; isNapping: boolean }): void {
   const { bitmap, state, placement } = options
   const besideX = placement.x + placement.width + 2
   const prop = state.isSleeping ? undefined : propFor(state.activity)
@@ -63,7 +63,7 @@ export function drawDetails(options: { bitmap: Bitmap; state: FamiliarState; pla
     setPixel({ bitmap, x: placement.x + placement.width, y: dropY, color: SWEAT })
     setPixel({ bitmap, x: placement.x + placement.width, y: dropY + 1, color: SWEAT })
   }
-  if (state.isSleeping) {
+  if (state.isSleeping || options.isNapping) {
     drawSleep({ bitmap, placement, clockMs: state.clockMs })
     return
   }

@@ -1,6 +1,6 @@
 {
   "name": "grill",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "While Claude works on your task, a sharp partner asks the questions that change the result. Answers reach Claude mid-turn. Brainstorm and side chat modes too.",
   "author": {
     "name": "Atchyut"
@@ -19,7 +19,14 @@
       "type": "string",
       "title": "Helper model",
       "description": "The model alias or id that writes questions and chats with you.",
-      "default": "haiku"
+      "default": "claude-sonnet-5-5"
+    },
+    "helperEffort": {
+      "type": "string",
+      "title": "Helper effort",
+      "description": "How hard the helper model thinks: low, medium, or high.",
+      "default": "medium",
+      "options": ["low", "medium", "high"]
     }
   }
 }
