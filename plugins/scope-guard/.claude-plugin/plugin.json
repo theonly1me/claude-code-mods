@@ -1,0 +1,31 @@
+{
+  "name": "scope-guard",
+  "version": "0.1.0",
+  "description": "Notices when Claude drifts outside your request. Clear drift waits for your answer in a question dialog; milder drift is flagged above the prompt with a pull-back key.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Mode",
+      "description": "ask stops clear drift with a question, flag only marks drift above the prompt, off checks nothing.",
+      "default": "ask",
+      "options": ["ask", "flag", "off"]
+    },
+    "confirmModel": {
+      "type": "string",
+      "title": "Confirm model",
+      "description": "The model alias or id that confirms a drift the rules found before Scope Guard asks or flags.",
+      "default": "claude-sonnet-5-5"
+    },
+    "manyFiles": {
+      "type": "number",
+      "title": "Many files",
+      "description": "How many distinct files Claude may change in one turn before Scope Guard counts it as a drift signal.",
+      "default": 8
+    }
+  }
+}

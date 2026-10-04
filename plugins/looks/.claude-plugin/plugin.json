@@ -1,0 +1,39 @@
+{
+  "name": "looks",
+  "version": "0.1.0",
+  "description": "Make Claude Code look the way you like: one-line tool calls, replies centered at a reading width, and four themes (Retro CRT, Punk, Synthwave, Zen paper) switched with /theme.",
+  "author": {
+    "name": "Atchyut"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/theonly1me/claude-code-mods",
+  "userConfig": {
+    "theme": {
+      "type": "string",
+      "title": "Theme",
+      "description": "The theme for new sessions until you pick one with /theme.",
+      "default": "off",
+      "options": ["off", "retro", "punk", "synthwave", "zen"]
+    },
+    "toolCalls": {
+      "type": "string",
+      "title": "Tool calls",
+      "description": "compact draws each tool call as one line (ctrl+o shows them in full); full keeps Claude Code's own rows.",
+      "default": "compact",
+      "options": ["compact", "full"]
+    },
+    "layout": {
+      "type": "string",
+      "title": "Layout",
+      "description": "centered puts prompts, tool calls, and replies in one column at the reading width; left keeps them at the left edge.",
+      "default": "centered",
+      "options": ["centered", "left"]
+    },
+    "readingWidth": {
+      "type": "number",
+      "title": "Reading width",
+      "description": "The column width, in characters, for centered prompts, tool calls, and replies.",
+      "default": 100
+    }
+  }
+}
