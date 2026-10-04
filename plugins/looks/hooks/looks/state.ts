@@ -1,7 +1,8 @@
 import { paletteOf, themeChoiceFrom, themeOf } from './themes'
 import type { Palette, Theme, ThemeChoice, Tone } from './themes'
 
-export type ToolCallsMode = 'compact' | 'full'
+export type ToolCallsMode = 'compact' | 'full' | 'plain'
+export type ToolView = 'compact' | 'tidy' | 'plain'
 export type LayoutMode = 'centered' | 'left'
 
 export type LooksSettings = {
@@ -14,8 +15,10 @@ export type LooksSettings = {
 export const SAVED_BASE_KEY = 'savedBaseTheme'
 const MIN_READING_WIDTH = 40
 const DEFAULT_READING_WIDTH = 100
+const RESULT_LINES = 6
+const VERBOSE_RESULT_LINES = 30
 
-let settings: LooksSettings = { theme: 'off', toolCalls: 'compact', layout: 'centered', readingWidth: DEFAULT_READING_WIDTH }
+let settings: LooksSettings = { theme: 'off', toolCalls: 'full', layout: 'left', readingWidth: DEFAULT_READING_WIDTH }
 let activeTheme: ThemeChoice = 'off'
 let highlighted: ThemeChoice = 'retro'
 let tone: Tone = 'dark'
@@ -28,8 +31,8 @@ export function settingsFrom(options: Readonly<Record<string, unknown>>): LooksS
   const width = Number(options.readingWidth)
   return {
     theme: themeChoiceFrom(options.theme) ?? 'off',
-    toolCalls: options.toolCalls === 'full' ? 'full' : 'compact',
-    layout: options.layout === 'left' ? 'left' : 'centered',
+    toolCalls: options.toolCalls === 'compact' || options.toolCalls === 'plain' ? options.toolCalls : 'full',
+    layout: options.layout === 'centered' ? 'centered' : 'left',
     readingWidth: Number.isFinite(width) ? Math.max(MIN_READING_WIDTH, Math.round(width)) : DEFAULT_READING_WIDTH,
   }
 }
@@ -90,8 +93,19 @@ export function setVerbose(next: boolean): void {
   isVerbose = next
 }
 
+export function toolView(): ToolView {
+  if (!isVerbose && isTranscriptExpanded) {
+    return 'plain'
+  }
+  return settings.toolCalls === 'compact' ? 'compact' : settings.toolCalls === 'full' ? 'tidy' : 'plain'
+}
+
 export function isCompactView(): boolean {
-  return settings.toolCalls === 'compact' && (isVerbose || !isTranscriptExpanded)
+  return toolView() === 'compact'
+}
+
+export function resultLimit(): number {
+  return isVerbose ? VERBOSE_RESULT_LINES : RESULT_LINES
 }
 
 export function isGroupUnfolded(isExpanded: boolean): boolean {

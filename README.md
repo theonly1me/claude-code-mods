@@ -41,7 +41,7 @@ The panes look best in the fullscreen layout: start Claude Code with `CLAUDE_COD
 | [Grill](#grill) | `/grill` | Sharp questions about your task while Claude works. Your answers reach Claude mid-turn. |
 | [Unslop](#unslop) | `/unslop` | Finds AI slop in Claude's edits (dashes, comment blocks, slop tests, filler words) and has Claude remove it. |
 | [Scope Guard](#scope-guard) | `/scope` | Notices when Claude edits outside what you asked for, and asks you first. |
-| [Looks](#looks) | `/theme` | One-line tool calls, centered replies, and four themes: Retro CRT, Punk, Synthwave, and Zen paper. |
+| [Looks](#looks) | `/theme` | Four themes (Retro CRT, Punk, Synthwave, Zen paper), tidier tool calls, and optional one-line rows and centered replies. |
 
 The work mods use `claude-sonnet-5-5` at `medium` effort as their helper model. Unslop uses `haiku` for its quick slop check. Each mod has settings in `/plugin` to change the model or turn the calls off.
 
@@ -104,7 +104,7 @@ Scope Guard remembers what you asked for. When Claude edits a file you did not m
 
 ![Looks with a theme on](plugins/looks/assets/preview.png)
 
-Looks makes the transcript easier to read: each tool call is one line, and Claude's replies are centered at a comfortable width. Themes restyle your prompt rows, the spinner, the turn footer, and the reply frame, and set a matching Claude Code base theme.
+Looks makes the transcript look the way you like. Themes restyle your prompt rows, the spinner, the turn footer, and the reply frame, and set a matching Claude Code base theme. Tool calls get a header line with their output in a short bar under it. Two more changes are off by default and you turn them on in `/plugin`: `toolCalls: compact` makes each tool call one line, and `layout: centered` centers replies at a comfortable width.
 
 - **Use:** `/theme` (or `/looks`) opens the picker. `/theme retro`, `/theme punk`, `/theme synthwave`, `/theme zen`, and `/theme off` switch directly. `/theme off` puts your own base theme back, and `/theme base` opens Claude Code's own theme list.
 - **Interact:** in the picker, press `r`, `p`, `s`, or `z` to apply a theme and `o` to turn themes off. Tab moves the preview between themes, `b` opens the base themes, and Esc closes the picker. ctrl+o shows the full tool rows.

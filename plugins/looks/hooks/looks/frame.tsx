@@ -1,5 +1,7 @@
 import type { BoxProps, ElementConstructor, RenderElement, RenderNode, TextProps } from 'claude-code'
 
+import { moreHint } from './result'
+import type { LineTone, ResultLine } from './result'
 import type { Palette, Theme } from './themes'
 import type { ToolState, ToolSummary } from './summary'
 
@@ -87,6 +89,40 @@ export function replyFrame(options: {
       <Box flexDirection="column" flexGrow={1} flexShrink={1}>
         {options.body}
       </Box>
+    </Box>
+  )
+}
+
+function toneColor(options: { tone: LineTone; colors: Palette }): string | undefined {
+  const { tone, colors } = options
+  return tone === 'added' ? colors.added : tone === 'removed' ? colors.removed : tone === 'failed' ? colors.failed : undefined
+}
+
+export function resultBlock(options: {
+  Box: ElementConstructor<BoxProps>
+  Text: ElementConstructor<TextProps>
+  colors: Palette
+  lines: readonly ResultLine[]
+  more: number
+}): RenderElement {
+  const { Box, Text, colors } = options
+  const bar = <Text color={colors.muted}>{'\u2502 '}</Text>
+  return (
+    <Box flexDirection="column" paddingLeft={2}>
+      {options.lines.map((line, index) => (
+        <Text key={`line-${index}`} wrap="truncate-end">
+          {bar}
+          <Text color={toneColor({ tone: line.tone, colors })} dimColor={line.tone === 'plain'}>
+            {line.text}
+          </Text>
+        </Text>
+      ))}
+      {options.more > 0 && (
+        <Text wrap="truncate-end">
+          {bar}
+          <Text dimColor>{moreHint(options.more)}</Text>
+        </Text>
+      )}
     </Box>
   )
 }

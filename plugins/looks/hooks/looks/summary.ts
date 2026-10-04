@@ -135,6 +135,10 @@ function describerOf(tool: string): Describe | undefined {
   })
 }
 
+export function hasOwnResult(tool: string): boolean {
+  return Object.hasOwn(DESCRIBERS, tool) && tool !== 'TodoWrite'
+}
+
 export function isSummarized(tool: string): boolean {
   return describerOf(tool) !== undefined
 }

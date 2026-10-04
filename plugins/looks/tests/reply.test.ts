@@ -9,7 +9,7 @@ const THEME_ROWS = [
   { args: 'zen', mark: '\u25cb ', words: /breathing|listening|raking the sand|sitting|brewing tea|watching the pond/, suffix: '\u2026' },
 ] as const
 
-test('replies are drawn as markdown in a centered reading column', async ($, on) => {
+test('replies are drawn as markdown in a centered reading column', { options: { layout: 'centered' } }, async ($, on) => {
   engine({ on })
   await start($)
   const reply = await $.ui.mount({
@@ -26,7 +26,7 @@ test('replies are drawn as markdown in a centered reading column', async ($, on)
   expect(await reply.find({ text: 'engine row' })).toBeUndefined()
 })
 
-test('the left layout with no theme keeps the engine reply', { options: { layout: 'left' } }, async ($, on) => {
+test('the defaults keep the engine reply at the left edge', async ($, on) => {
   engine({ on })
   await start($)
   const reply = await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'AssistantMessage', requestId: 'r2', props: { text: 'Done.', isFirstOfReply: true } })
