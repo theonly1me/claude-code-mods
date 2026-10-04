@@ -1,4 +1,4 @@
-export type KillTally = { codex: number; gemini: number }
+export type KillTally = { codex: number; gemini: number; chatgpt: number }
 
 declare module 'claude-code' {
   interface PluginState {

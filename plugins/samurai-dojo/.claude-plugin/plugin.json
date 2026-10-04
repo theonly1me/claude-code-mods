@@ -1,7 +1,7 @@
 {
   "name": "samurai-dojo",
-  "version": "0.3.0",
-  "description": "A Claude samurai cuts down a Codex or Gemini alien for every tool call Claude makes.",
+  "version": "0.4.0",
+  "description": "A Claude samurai cuts down a Codex, Gemini, or ChatGPT foe for every tool call, and meditates, trains, and duels between them through four seasons.",
   "author": {
     "name": "Atchyut"
   },

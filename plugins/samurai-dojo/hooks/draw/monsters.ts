@@ -1,3 +1,4 @@
+import { CHATGPT_FRAMES } from '../art/chatgpt'
 import { CODEX_FRAMES } from '../art/codex'
 import { GEMINI_FRAMES } from '../art/gemini'
 import { parsePixelMap } from '../shared/pixel/sprite'
@@ -18,17 +19,22 @@ const CROWN = parsePixelMap({
 const whiten: Tint = color => mixColors({ from: color, to: WHITE, amount: 0.85 })
 const redden: Tint = color => mixColors({ from: color, to: ELITE_RED, amount: 0.38 })
 
-function framesOf(monster: Monster): FrameSet {
-  return monster.kind === 'codex' ? CODEX_FRAMES : GEMINI_FRAMES
+const FRAMES: Record<Monster['kind'], FrameSet> = {
+  codex: CODEX_FRAMES,
+  gemini: GEMINI_FRAMES,
+  chatgpt: CHATGPT_FRAMES,
 }
 
 function hoverOffset(monster: Monster): number {
-  return monster.kind === 'gemini' ? 1 + Math.round(Math.sin(monster.walkMs / 260)) : 0
+  if (monster.kind === 'gemini') {
+    return 1 + Math.round(Math.sin(monster.walkMs / 260))
+  }
+  return monster.kind === 'chatgpt' ? 1 + Math.round(Math.cos(monster.walkMs / 330)) : 0
 }
 
 export function drawMonster(options: { bitmap: Bitmap; monster: Monster }): void {
   const { bitmap, monster } = options
-  const frames = framesOf(monster)
+  const frames = FRAMES[monster.kind]
   const frameIndex = Math.floor(monster.walkMs / WALK_FRAME_MS) % frames.length
   const sprite = frames[frameIndex] ?? frames[0]
   const x = Math.round(monster.x)
@@ -36,7 +42,7 @@ export function drawMonster(options: { bitmap: Bitmap; monster: Monster }): void
 
   if (monster.phase === 'dying') {
     const progress = Math.min(1, monster.phaseMs / DEATH_MS)
-    const drawDeath = monster.kind === 'codex' ? drawScatter : drawSplit
+    const drawDeath = monster.kind === 'gemini' ? drawSplit : drawScatter
     drawDeath({ target: bitmap, source: sprite, x, y, progress, seed: monster.id })
     return
   }

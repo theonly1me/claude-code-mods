@@ -18,7 +18,7 @@ export function storySoFar(progress: Progress): string {
     ...finished,
     `${progress.chapter + 1}. ${current.place} (now): ${current.opening} ${current.demon} has ${progress.demonHp} of ${maxHpFor(progress)} left.`,
     '',
-    `How the fight works: reading and searching is Tanjiro's ${FORM_NAMES.water}. Edits are Inosuke's ${FORM_NAMES.beast}. Commands are Zenitsu's ${FORM_NAMES.thunder}. Agents call the Flame Hashira. Each of your prompts brings Nezuko's ${FORM_NAMES.flame}, and a finished turn lands Tanjiro's ${FORM_NAMES.sun}. Failed tools let the demon strike back.`,
+    `How the fight works: every tool call Claude finishes is a strike, and the four slayers take turns. Reading leans on Tanjiro's ${FORM_NAMES.water}, edits on Inosuke's ${FORM_NAMES.beast}, commands on Zenitsu's ${FORM_NAMES.thunder}, but whoever struck least recently steps in when the favourite just went. Agents call the Flame Hashira. Each of your prompts brings Nezuko's ${FORM_NAMES.flame}, and a finished turn lands Tanjiro's ${FORM_NAMES.sun}. Failed tools let the demon strike back. Between strikes the Corps spars with the demon, but only real work wears it down.`,
     `Lifetime: ${progress.attacks} attacks, ${progress.defeated} demons defeated, ${progress.dawns} dawns.`,
   ]
   return lines.join('\n')

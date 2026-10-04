@@ -13,6 +13,8 @@ export function createMonster(options: {
   id: number
   kind: MonsterKind
   isElite: boolean
+  isAmbient: boolean
+  label: string
   x: number
 }): Monster {
   return {

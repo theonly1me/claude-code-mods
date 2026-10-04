@@ -32,3 +32,13 @@ export const FLASH_MS = 120
 export const WALK_FRAME_MS = 280
 export const FLURRY_WINDOW_MS = 1500
 export const FLURRY_KILLS = 3
+
+export const RIVAL_STAND_OFFSET = 25
+export const RIVAL_WALK_PIXELS_PER_SECOND = 36
+export const RIVAL_RETREAT_PIXELS_PER_SECOND = 110
+export const EXCHANGE_MS = 560
+export const DUEL_FINISH_MS = 1400
+export const KI_INTERVAL_MS = 380
+export const WAVE_DOOM_DELAY_MS = 1700
+export const WAVE_STAGGER_MS = 420
+export const LOG_LIMIT = 8

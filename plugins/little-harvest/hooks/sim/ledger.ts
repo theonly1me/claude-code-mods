@@ -24,7 +24,7 @@ export function countPatchLines(hunks: readonly { lines: readonly string[] }[]):
 
 export function noteClaudeChange(options: { path: string; lines: number }): void {
   claudeLines.set(options.path, (claudeLines.get(options.path) ?? 0) + options.lines)
-  farm.tend(options)
+  farm.tend({ ...options, by: 'claude' })
 }
 
 export function parseNumstat(text: string): Map<string, number> {

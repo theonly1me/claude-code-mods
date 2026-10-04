@@ -23,7 +23,7 @@ export function drawEffect(options: { bitmap: Bitmap; effect: Effect }): void {
       color,
     })
   })
-  if (progress < 0.3 && effect.kind !== 'dust') {
+  if (progress < 0.3 && style.hasFlash) {
     const first = style.colors[0]
     if (first !== undefined) {
       setPixel({ bitmap, x: effect.x, y: effect.y, color: first })

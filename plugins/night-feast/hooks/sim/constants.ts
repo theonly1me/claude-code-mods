@@ -34,3 +34,15 @@ export const DAWN_PERCENT = 90
 export const NEW_NIGHT_DROP = 25
 export const VIAL_DROP_X = 2
 export const VIAL_BOTTOM_Y = 9
+export const FLEE_SPEED_PIXELS_PER_SECOND = 14
+export const STALK_SPEED_PIXELS_PER_SECOND = 9
+export const CRUISE_SPEED_PIXELS_PER_SECOND = 34
+export const IDLE_BETWEEN_MS = 900
+export const LOG_LIMIT = 8
+export const OWL_TREE_X = 10
+
+export const HOUSES: readonly { offset: number; width: number; door: number }[] = [
+  { offset: 1, width: 7, door: 3 },
+  { offset: 10, width: 9, door: 4 },
+  { offset: 21, width: 7, door: 3 },
+]

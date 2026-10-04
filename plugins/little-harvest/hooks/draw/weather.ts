@@ -2,7 +2,7 @@ import { fillRect, setPixel } from '../shared/pixel/bitmap'
 import type { Bitmap, Color } from '../shared/pixel/bitmap'
 import { mixColors, toRadians } from '../shared/pixel/colors'
 import { MOUND_Y, STORM_MS, SUN_RAYS_MS } from '../sim/constants'
-import type { Weather } from '../sim/types'
+import type { TestWeather } from '../sim/types'
 import type { Light } from './light'
 import { celestialPosition } from './sky'
 
@@ -13,7 +13,7 @@ const BOLT: Color = 0xfff27a
 const RAY: Color = 0xfff1a8
 const MOONBEAM: Color = 0xdfe6ff
 
-function drawStorm(options: { bitmap: Bitmap; right: number; weather: Weather; light: Light }): void {
+function drawStorm(options: { bitmap: Bitmap; right: number; weather: TestWeather; light: Light }): void {
   const { bitmap, right, weather } = options
   const fade = Math.min(1, weather.ms / 500, (STORM_MS - weather.ms) / 800)
   const cloud = mixColors({ from: options.light.middle, to: STORM, amount: fade })
@@ -41,7 +41,7 @@ function drawStorm(options: { bitmap: Bitmap; right: number; weather: Weather; l
   }
 }
 
-function drawRays(options: { bitmap: Bitmap; hour: number; weather: Weather; light: Light }): void {
+function drawRays(options: { bitmap: Bitmap; hour: number; weather: TestWeather; light: Light }): void {
   const { bitmap, light } = options
   const spot = celestialPosition({ hour: options.hour, width: bitmap.width })
   const grow = Math.min(1, options.weather.ms / 500)
@@ -64,7 +64,7 @@ function drawRays(options: { bitmap: Bitmap; hour: number; weather: Weather; lig
   })
 }
 
-export function drawWeather(options: { bitmap: Bitmap; weather: Weather; hour: number; right: number; light: Light }): void {
+export function drawWeather(options: { bitmap: Bitmap; weather: TestWeather; hour: number; right: number; light: Light }): void {
   if (options.weather.kind === 'storm') {
     drawStorm(options)
   }

@@ -1,15 +1,14 @@
 import { fillRect, setPixel } from '../shared/pixel/bitmap'
 import type { Bitmap, Color } from '../shared/pixel/bitmap'
 import { mixColors } from '../shared/pixel/colors'
-import { BARN_WIDTH, HORIZON_Y } from '../sim/constants'
+import type { SeasonPalette } from '../shared/pixel/seasons'
+import { BARN_WIDTH, FIELD_LEFT, HORIZON_Y } from '../sim/constants'
 import type { Cloud } from '../sim/types'
 import type { Light } from './light'
 import { skyRow } from './light'
 
 const SUN: Color = 0xffdf6e
 const SUN_CORE: Color = 0xfff4c2
-const MOON: Color = 0xf0ead2
-const MOON_SHADE: Color = 0xc9c2a6
 const STARS = [
   { x: 9, y: 1 },
   { x: 17, y: 4 },
@@ -24,8 +23,8 @@ const STARS = [
 export function celestialPosition(options: { hour: number; width: number }): { x: number; y: number; isSun: boolean } {
   const isSun = options.hour >= 6 && options.hour < 19
   const progress = isSun ? (options.hour - 6) / 13 : ((options.hour - 19 + 24) % 24) / 11
-  const left = 14
-  const right = Math.max(left + 4, options.width - BARN_WIDTH - 8)
+  const left = FIELD_LEFT + 1
+  const right = Math.max(left + 4, options.width - BARN_WIDTH - 14)
   return {
     x: Math.round(left + progress * (right - left)),
     y: Math.round(5 - 4 * Math.sin(Math.PI * progress)),
@@ -39,7 +38,7 @@ function drawDisc(options: { bitmap: Bitmap; x: number; y: number; color: Color 
   fillRect({ bitmap, x, y: y + 1, width: 4, height: 2, color })
 }
 
-function drawCelestial(options: { bitmap: Bitmap; hour: number; light: Light }): void {
+function drawCelestial(options: { bitmap: Bitmap; hour: number; light: Light; moon: Color }): void {
   const { bitmap } = options
   const spot = celestialPosition({ hour: options.hour, width: bitmap.width })
   if (spot.isSun) {
@@ -50,9 +49,10 @@ function drawCelestial(options: { bitmap: Bitmap; hour: number; light: Light }):
     setPixel({ bitmap, x: spot.x + 1, y: spot.y + 1, color: SUN_CORE })
     return
   }
-  drawDisc({ bitmap, x: spot.x, y: spot.y, color: MOON })
-  setPixel({ bitmap, x: spot.x + 3, y: spot.y + 1, color: MOON_SHADE })
-  setPixel({ bitmap, x: spot.x + 2, y: spot.y + 2, color: MOON_SHADE })
+  const shade = mixColors({ from: options.moon, to: 0x5a5a6a, amount: 0.3 })
+  drawDisc({ bitmap, x: spot.x, y: spot.y, color: options.moon })
+  setPixel({ bitmap, x: spot.x + 3, y: spot.y + 1, color: shade })
+  setPixel({ bitmap, x: spot.x + 2, y: spot.y + 2, color: shade })
 }
 
 function drawStars(options: { bitmap: Bitmap; light: Light; clockMs: number }): void {
@@ -66,9 +66,9 @@ function drawStars(options: { bitmap: Bitmap; light: Light; clockMs: number }): 
   })
 }
 
-function drawHills(options: { bitmap: Bitmap; light: Light }): void {
+function drawHills(options: { bitmap: Bitmap; light: Light; palette: SeasonPalette }): void {
   const { bitmap, light } = options
-  const near = light.tint(0x3f7a3a)
+  const near = light.tint(mixColors({ from: options.palette.groundShade, to: options.palette.ground, amount: 0.35 }))
   const far = mixColors({ from: light.bottom, to: near, amount: 0.45 })
   for (let x = 0; x < bitmap.width; x += 1) {
     const farTop = Math.round(7.4 + Math.sin(x / 9) * 1.3 + Math.sin(x / 3.7) * 0.5)
@@ -90,12 +90,12 @@ export function drawClouds(options: { bitmap: Bitmap; clouds: readonly Cloud[]; 
   })
 }
 
-export function drawSky(options: { bitmap: Bitmap; light: Light; hour: number; clockMs: number }): void {
+export function drawSky(options: { bitmap: Bitmap; light: Light; hour: number; clockMs: number; palette: SeasonPalette }): void {
   const { bitmap, light } = options
   for (let y = 0; y < HORIZON_Y; y += 1) {
     fillRect({ bitmap, x: 0, y, width: bitmap.width, height: 1, color: skyRow({ light, y, height: HORIZON_Y }) })
   }
   drawStars({ bitmap, light, clockMs: options.clockMs })
-  drawCelestial({ bitmap, hour: options.hour, light })
-  drawHills({ bitmap, light })
+  drawCelestial({ bitmap, hour: options.hour, light, moon: options.palette.moon })
+  drawHills({ bitmap, light, palette: options.palette })
 }

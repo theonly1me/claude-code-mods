@@ -1,7 +1,7 @@
 {
   "name": "night-feast",
-  "version": "0.3.0",
-  "description": "A vampire feeds on every tool call Claude finishes while the moon tracks how full the context window is. Dawn means it is time to compact.",
+  "version": "0.4.0",
+  "description": "A vampire feeds on every tool call Claude finishes while the moon tracks how full the context window is. Between meals it stalks, swoops, and lies in wait. Dawn means it is time to compact.",
   "author": {
     "name": "Atchyut"
   },

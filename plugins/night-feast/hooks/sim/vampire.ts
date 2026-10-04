@@ -34,11 +34,18 @@ export function createVampire(): Vampire {
   }
 }
 
+const AMBIENT_MODES: readonly VampireMode[] = ['stalking', 'hiding', 'cruising', 'roosting']
+const BAT_MODES: readonly VampireMode[] = ['flying', 'returning', 'cruising', 'roosting']
+
 export function isBat(vampire: Vampire): boolean {
-  return vampire.mode === 'flying' || vampire.mode === 'returning'
+  return BAT_MODES.includes(vampire.mode)
 }
 
-function enter(options: { vampire: Vampire; mode: VampireMode }): void {
+export function isAmbient(vampire: Vampire): boolean {
+  return AMBIENT_MODES.includes(vampire.mode)
+}
+
+export function enter(options: { vampire: Vampire; mode: VampireMode }): void {
   options.vampire.mode = options.mode
   options.vampire.modeMs = 0
 }
@@ -53,7 +60,7 @@ function flyToward(options: { vampire: Vampire; x: number; dtMs: number }): bool
   return Math.abs(options.x - vampire.x) < 0.5
 }
 
-function returnTo(options: { vampire: Vampire; x: number; landsPerched: boolean }): void {
+export function returnTo(options: { vampire: Vampire; x: number; landsPerched: boolean }): void {
   options.vampire.destinationX = options.x
   options.vampire.landsPerched = options.landsPerched
   enter({ vampire: options.vampire, mode: 'returning' })
@@ -70,14 +77,15 @@ export function advanceVampire(options: { vampire: Vampire; dtMs: number; plan: 
   const step: VampireStep = { didTransform: false, bittenId: undefined, didFinishFeed: false }
   vampire.modeMs += dtMs
   vampire.clockMs += dtMs
-  const canHunt = vampire.mode === 'idle' || vampire.mode === 'perched' || vampire.mode === 'returning'
+  const canHunt =
+    vampire.mode === 'idle' || vampire.mode === 'perched' || vampire.mode === 'returning' || isAmbient(vampire)
   if (canHunt && plan.target) {
-    step.didTransform = vampire.mode !== 'returning'
+    step.didTransform = !isBat(vampire)
     vampire.targetId = plan.target.id
     enter({ vampire, mode: 'flying' })
-  } else if (vampire.mode === 'idle' && plan.perchX !== undefined) {
+  } else if ((vampire.mode === 'idle' || isAmbient(vampire)) && plan.perchX !== undefined) {
+    step.didTransform = !isBat(vampire)
     returnTo({ vampire, x: plan.perchX, landsPerched: true })
-    step.didTransform = true
   } else if (vampire.mode === 'flying') {
     const target = options.target
     if (!target || target.state !== 'walking') {

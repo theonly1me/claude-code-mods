@@ -5,7 +5,9 @@ import type { Bitmap } from '../../shared/pixel/bitmap.ts'
 import { runScript } from './script.ts'
 import type { Storyboard } from './script.ts'
 
-function scene(options: { percent: number | null; events: { atMs: number; run: (night: Night) => void }[]; captureAtMs: number[] }): Bitmap[] {
+type NightEvent = { atMs: number; run: (night: Night) => void }
+
+function scene(options: { percent: number | null; events: NightEvent[]; captureAtMs: number[] }): Bitmap[] {
   const night = createNight()
   night.measure(options.percent)
   return runScript({
@@ -19,22 +21,36 @@ function scene(options: { percent: number | null; events: { atMs: number; run: (
 }
 
 export function storyboard(): Storyboard {
-  const early = scene({
-    percent: 22,
-    events: [
-      { atMs: 400, run: night => night.feed() },
-      { atMs: 3200, run: night => night.feed() },
-    ],
-    captureAtMs: [1200, 1960, 3400, 4400],
+  const ambient = scene({
+    percent: 35,
+    events: [],
+    captureAtMs: [2480, 7400, 13600, 18400, 19400, 22800, 25400, 31600],
   })
-  const middle = scene({
-    percent: 55,
+  const work = scene({
+    percent: 62,
     events: [
-      { atMs: 1200, run: night => night.garlic() },
-      { atMs: 3000, run: night => night.celebrate() },
+      { atMs: 400, run: night => night.feed('Read') },
+      { atMs: 2800, run: night => night.garlic('Bash') },
+      { atMs: 4400, run: night => night.celebrate() },
     ],
-    captureAtMs: [1400, 1720, 4800],
+    captureAtMs: [1240, 1480, 3000, 6400],
   })
-  const dawn = scene({ percent: 91, events: [], captureAtMs: [1200] })
-  return { bitmaps: [...early, ...middle, ...dawn], note: 'early night feeding, garlic and perch, dawn warning' }
+  return {
+    bitmaps: [...ambient, ...work],
+    note: 'stalk, swoop, ambush with the cat on the roofs, pounce, door slam, owl, shadows, tower and moon bats, then a feed, garlic, and the cape',
+  }
+}
+
+export function animation(): { frameMs: number; bitmaps: Bitmap[] } {
+  const frameMs = 80
+  const captureAtMs = Array.from({ length: 150 }, (_, index) => 400 + index * frameMs)
+  const bitmaps = scene({
+    percent: 48,
+    events: [
+      { atMs: 3200, run: night => night.feed('Read') },
+      { atMs: 8800, run: night => night.feed('Edit') },
+    ],
+    captureAtMs,
+  })
+  return { frameMs, bitmaps }
 }

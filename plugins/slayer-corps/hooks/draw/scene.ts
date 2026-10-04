@@ -10,7 +10,6 @@ export type SceneView = {
   bitmap: Bitmap
   clockMs: number
   chapter: Chapter
-  chapterNumber: number
   cycle: number
   phase: BattlePhase
   dawn: number
@@ -24,7 +23,6 @@ export type SceneView = {
   hp: number
   shownHp: number
   maxHp: number
-  idleMs: number
 }
 
 export function drawScene(view: SceneView): void {
@@ -41,7 +39,7 @@ export function drawScene(view: SceneView): void {
       isTrueForm: view.isTrueForm,
     })
   }
-  drawActors({ bitmap, actors: view.actors, clockMs: view.clockMs, idleMs: view.idleMs, isCelebrating: view.phase === 'dawn' })
+  drawActors({ bitmap, actors: view.actors, clockMs: view.clockMs, isCelebrating: view.phase === 'dawn' })
   drawParticles({ bitmap, particles: view.particles })
   if (view.phase !== 'dawn') {
     drawHud({

@@ -2,6 +2,7 @@ import type { Color } from '../shared/pixel/bitmap'
 import type { Effect, EffectKind } from './types'
 
 export type EffectStyle = {
+  hasFlash: boolean
   durationMs: number
   reach: number
   colors: readonly Color[]
@@ -14,28 +15,39 @@ const FLURRY_DIRECTIONS = Array.from({ length: 31 }, (_, step) => -120 + step * 
 
 export const EFFECT_STYLES: Record<EffectKind, EffectStyle> = {
   hit: {
+    hasFlash: true,
     durationMs: 300,
     reach: 8,
     colors: [0xffffff, 0x6fe3f5, 0x3b7dd8],
     anglesDegrees: ALL_DIRECTIONS,
   },
   clang: {
+    hasFlash: true,
     durationMs: 260,
     reach: 6,
     colors: [0xfff3b0, 0xf2c14e, 0xd97757],
     anglesDegrees: ALL_DIRECTIONS,
   },
   dust: {
+    hasFlash: false,
     durationMs: 360,
     reach: 4,
     colors: [0xc9b79c, 0x8b7355],
     anglesDegrees: UPWARD_DIRECTIONS,
   },
   flurry: {
+    hasFlash: true,
     durationMs: 520,
     reach: 14,
     colors: [0xffffff, 0xfff3b0, 0xf2c14e, 0xd97757],
     anglesDegrees: FLURRY_DIRECTIONS,
+  },
+  ki: {
+    hasFlash: false,
+    durationMs: 1500,
+    reach: 7,
+    colors: [0xe6fbff, 0xa8e8f5, 0x6fc3df, 0x3b7dd8],
+    anglesDegrees: [-90],
   },
 }
 

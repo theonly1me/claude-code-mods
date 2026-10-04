@@ -1,5 +1,7 @@
-import { fillRect, setPixel } from '../shared/pixel/bitmap'
+import { fillRect, getPixel, setPixel } from '../shared/pixel/bitmap'
 import type { Bitmap, Color } from '../shared/pixel/bitmap'
+import { mixColors } from '../shared/pixel/colors'
+import { FEET_Y } from '../sim/constants'
 import { EFFECT_MS } from '../sim/effects'
 import type { Effect } from '../sim/types'
 
@@ -10,6 +12,8 @@ const BULB = 0xf5f0e6
 const BULB_SHADE = 0xd8cfbf
 const BULB_STEM = 0x76c893
 const BLOOD = 0xc1121f
+const ALARM = 0xffd23f
+const DOOR_LIGHT = 0xffd479
 
 function colorAt(options: { colors: readonly Color[]; progress: number }): Color {
   const index = Math.min(options.colors.length - 1, Math.floor(options.progress * options.colors.length))
@@ -57,10 +61,39 @@ function drawDrop(options: { bitmap: Bitmap; effect: Effect; progress: number })
   setPixel({ bitmap: options.bitmap, x: options.effect.x, y: options.effect.y + options.progress * 5, color: BLOOD })
 }
 
+function drawAlarm(options: { bitmap: Bitmap; effect: Effect; progress: number }): void {
+  const { bitmap, effect, progress } = options
+  if (progress > 0.85) {
+    return
+  }
+  const lift = Math.round(Math.sin(progress * Math.PI) * 1.5)
+  setPixel({ bitmap, x: effect.x, y: effect.y - lift, color: ALARM })
+  setPixel({ bitmap, x: effect.x, y: effect.y + 1 - lift, color: ALARM })
+  setPixel({ bitmap, x: effect.x, y: effect.y + 3 - lift, color: ALARM })
+}
+
+function drawLight(options: { bitmap: Bitmap; effect: Effect; progress: number }): void {
+  const { bitmap, effect, progress } = options
+  const strength = 1 - progress
+  for (let y = effect.y + 1; y <= FEET_Y; y += 1) {
+    ;[-1, 0, 1].forEach(offset => {
+      const under = getPixel({ bitmap, x: effect.x + offset, y })
+      if (under !== null) {
+        const amount = (offset === 0 ? 0.95 : 0.45) * strength
+        setPixel({ bitmap, x: effect.x + offset, y, color: mixColors({ from: under, to: DOOR_LIGHT, amount }) })
+      }
+    })
+  }
+}
+
 export function drawEffect(options: { bitmap: Bitmap; effect: Effect }): void {
   const { bitmap, effect } = options
   const progress = Math.min(1, effect.ageMs / EFFECT_MS[effect.kind])
-  if (effect.kind === 'poof') {
+  if (effect.kind === 'alarm') {
+    drawAlarm({ bitmap, effect, progress })
+  } else if (effect.kind === 'light') {
+    drawLight({ bitmap, effect, progress })
+  } else if (effect.kind === 'poof') {
     drawPoof({ bitmap, effect, progress })
   } else if (effect.kind === 'spark') {
     drawSpark({ bitmap, effect, progress })

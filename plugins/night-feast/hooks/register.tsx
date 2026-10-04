@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import { configureStage, installStage, STAGE_HIDDEN_KEY, toggleStageHidden } from './shared/pixel/stage'
+import { configureStage, installStage } from './shared/pixel/stage'
 import { FRAME_MS, MAX_COLUMNS, MIN_COLUMNS, STAGE_ROWS } from './sim/constants'
 import { createNight } from './sim/night'
 
@@ -10,10 +10,10 @@ const LIFETIME_KEY = 'lifetimeFeeds'
 const sessionAtom = atom({ plugin: 'night-feast', key: 'session' } as const, { feeds: 0, garlic: 0, night: 1 })
 const night = createNight()
 
-function summary(): string {
+function report(): string[] {
   const stats = night.stats()
-  const sky = stats.percent === null ? 'dusk' : `context ${stats.percent}%`
-  return `night feast · night ${stats.night} · ${sky} · blood ${stats.blood}% · ${stats.feeds} feeds this session`
+  const dawn = stats.percent !== null && stats.percent >= 80 ? ' Dawn is close: consider /compact.' : ''
+  return [night.summary(), `Lifetime feeds: ${stats.lifetimeFeeds}. Garlic this session: ${stats.garlic}.${dawn}`]
 }
 
 function applyMeasure($: EngineInterface, options: { percent: number | null }): void {
@@ -34,28 +34,31 @@ async function saveProgress($: EngineInterface): Promise<void> {
 
 export const register: Register = on => {
   configureStage({
-    rasterKey: 'night-feast:stage',
+    game: 'night-feast',
+    title: 'Night Feast',
+    command: {
+      name: 'feast',
+      description: 'Show or hide the night feast (on, off, stats)',
+      report,
+    },
     rows: STAGE_ROWS,
     minColumns: MIN_COLUMNS,
     maxColumns: MAX_COLUMNS,
     frameMs: FRAME_MS,
     scene: {
+      begin: () => undefined,
       resize: columns => night.resize(columns),
       tick: dtMs => {
         night.tick({ dtMs })
       },
       frame: () => night.frame(),
-      summary,
+      summary: () => night.summary(),
+      log: () => night.log(),
     },
   })
   installStage(on)
 
   on('session.start', async ($, e, next) => {
-    await $.command.register({
-      name: 'feast',
-      description: 'Show or hide the night feast and see how full the context is',
-      immediate: true,
-    })
     const saved = await read($, sessionAtom)
     night.restore({ ...saved, lifetimeFeeds: Number((await $.store.get(LIFETIME_KEY)) ?? 0) })
     const usage = await $.session.usage().catch(() => undefined)
@@ -88,13 +91,13 @@ export const register: Register = on => {
     try {
       const ran = await next(e)
       if (ran.deny !== undefined || ran.isError === true) {
-        night.garlic()
+        night.garlic(e.tool)
       } else {
-        night.feed()
+        night.feed(e.tool)
       }
       return ran
     } catch (error) {
-      night.garlic()
+      night.garlic(e.tool)
       throw error
     }
   })
@@ -114,20 +117,5 @@ export const register: Register = on => {
   on('session.end', async ($, e, next) => {
     await $.store.set(LIFETIME_KEY, night.stats().lifetimeFeeds)
     return next(e)
-  })
-
-  on('command.run', { command: 'feast' }, async $ => {
-    const isHidden = toggleStageHidden()
-    await $.store.set(STAGE_HIDDEN_KEY, isHidden)
-    $.ui.invalidate('ui.render')
-    const stats = night.stats()
-    const dawn = stats.percent !== null && stats.percent >= 80 ? ' Dawn is close: consider /compact.' : ''
-    return {
-      text: [
-        isHidden ? 'The night is hidden.' : 'The night is open.',
-        `${summary()}.`,
-        `Lifetime feeds: ${stats.lifetimeFeeds}. Garlic this session: ${stats.garlic}.${dawn}`,
-      ].join('\n'),
-    }
   })
 }

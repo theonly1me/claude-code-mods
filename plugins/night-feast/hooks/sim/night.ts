@@ -1,36 +1,29 @@
 import { drawScene } from '../draw/scene'
 import { clearBitmap, createBitmap } from '../shared/pixel/bitmap'
 import type { Bitmap } from '../shared/pixel/bitmap'
-import {
-  CASTLE_WIDTH,
-  FEED_BLOOD,
-  FEET_Y,
-  GARLIC_BLOOD,
-  HUNGER_MS,
-  MAX_COLUMNS,
-  MAX_QUEUED_FEEDS,
-  MAX_VILLAGERS,
-  MIN_VILLAGERS,
-  STAGE_HEIGHT,
-  VIAL_BOTTOM_Y,
-  VIAL_DROP_X,
-} from './constants'
-import { advanceEffects } from './effects'
+import { createDirector } from './ambient'
+import { CASTLE_WIDTH, FEED_BLOOD, FEET_Y, GARLIC_BLOOD, HUNGER_MS, MAX_COLUMNS, MAX_QUEUED_FEEDS, STAGE_HEIGHT, VIAL_BOTTOM_Y, VIAL_DROP_X } from './constants'
+import { createEffects } from './effects'
+import { createJournal } from './journal'
+import { ACTIVITY_LINES, describeDoing } from './moves'
+import { createPopulation } from './population'
+import { createScenery, VIGNETTE_LINES } from './scenery'
 import { createSky } from './sky'
-import type { Effect, EffectKind, MeasureOutcome, NightStats, Villager } from './types'
-import { advanceVampire, createVampire, recoil } from './vampire'
-import { advanceVillagers, biteVillager, createVillager, nearestWalking } from './villagers'
+import type { MeasureOutcome, NightStats } from './types'
+import { advanceVampire, createVampire, isAmbient, recoil } from './vampire'
 
-const SPAWN_COOLDOWN_MS = 1500
 const PERCH_OFFSET = 12
 
-export function createNight() {
+export function createNight(options: { seed?: number } = {}) {
+  const seed = options.seed ?? 7
   const sky = createSky()
   const vampire = createVampire()
-  let villagers: Villager[] = []
-  let effects: Effect[] = []
-  let nextId = 1
-  let queuedFeeds = 0
+  const director = createDirector(seed)
+  const scenery = createScenery(seed + 11)
+  const journal = createJournal()
+  const population = createPopulation()
+  const effects = createEffects()
+  let queuedLabels: string[] = []
   let isPerchRequested = false
   let blood = 50
   let feeds = 0
@@ -38,34 +31,47 @@ export function createNight() {
   let lifetimeFeeds = 0
   let finishedFeeds = 0
   let hungerMs = 0
-  let spawnCooldownMs = 0
   let columns = MAX_COLUMNS
   let bitmap = createBitmap({ width: columns, height: STAGE_HEIGHT })
 
-  function addEffect(options: { kind: EffectKind; x: number; y: number }): void {
-    effects.push({ ...options, ageMs: 0, seed: (effects.length * 1.37 + nextId) % 6.28 })
-  }
-
-  function spawnVillager(): void {
-    if (villagers.length < MAX_VILLAGERS) {
-      villagers.push(createVillager({ id: nextId, width: columns }))
-      nextId += 1
-    }
-  }
-
-  function completeFeed(): void {
+  function completeFeed(label: string | undefined): void {
     feeds += 1
     lifetimeFeeds += 1
     finishedFeeds += 1
     blood = Math.min(100, blood + FEED_BLOOD)
+    journal.push(label ? `Fed on a villager after ${label}` : 'Fed on a villager')
   }
 
-  function keepVillagersAround(dtMs: number): void {
-    spawnCooldownMs = Math.max(0, spawnCooldownMs - dtMs)
-    const walking = villagers.filter(villager => villager.state === 'walking').length
-    if (spawnCooldownMs === 0 && (walking < MIN_VILLAGERS || walking < queuedFeeds)) {
-      spawnVillager()
-      spawnCooldownMs = SPAWN_COOLDOWN_MS
+  function noteMeasure(outcome: MeasureOutcome): MeasureOutcome {
+    if (outcome.isNewNight) {
+      journal.push(`Night ${sky.state().night} begins after a compaction`)
+    }
+    return outcome
+  }
+
+  function runAmbient(dtMs: number): void {
+    const isBusy = queuedLabels.length > 0 || isPerchRequested || !(vampire.mode === 'idle' || isAmbient(vampire))
+    if (isBusy) {
+      director.cancel(vampire)
+      return
+    }
+    const step = director.advance({ vampire, dtMs, villagers: population.villagers(), width: columns })
+    if (step.started) {
+      journal.push(ACTIVITY_LINES[step.started])
+    }
+    if (step.didTransform) {
+      effects.add({ kind: 'poof', x: Math.round(vampire.x) + 6, y: FEET_Y - 5 - Math.round(vampire.lift) })
+    }
+    if (step.wantsPrey) {
+      const prey = population.prey({ width: columns, nearX: vampire.x })
+      if (prey !== undefined) {
+        director.setPrey(prey)
+      }
+    }
+    const scared = step.scareId === undefined ? undefined : population.scare({ id: step.scareId, width: columns, fromX: vampire.x + 6 })
+    if (scared) {
+      effects.add({ kind: 'alarm', x: Math.round(scared.x) + 2, y: FEET_Y - 10 })
+      journal.push('The vampire pounces and the lantern bearer runs')
     }
   }
 
@@ -85,35 +91,43 @@ export function createNight() {
     },
 
     measure(percent: number | null): MeasureOutcome {
-      return sky.measure(percent)
+      return noteMeasure(sky.measure(percent))
     },
 
     compacted(): void {
+      const before = sky.state().night
       sky.compacted()
+      if (sky.state().night !== before) {
+        journal.push(`Night ${sky.state().night} begins after a compaction`)
+      }
     },
 
-    feed(): void {
-      if (queuedFeeds >= MAX_QUEUED_FEEDS) {
-        completeFeed()
+    feed(label?: string): void {
+      if (queuedLabels.length >= MAX_QUEUED_FEEDS) {
+        completeFeed(label)
         return
       }
-      queuedFeeds += 1
+      queuedLabels = [...queuedLabels, label ?? '']
     },
 
-    garlic(): void {
+    garlic(label?: string): void {
       garlicHits += 1
       blood = Math.max(0, blood - GARLIC_BLOOD)
-      addEffect({ kind: 'fume', x: Math.round(vampire.x) + (vampire.facing === 1 ? 11 : -3), y: FEET_Y - 3 })
-      addEffect({ kind: 'drop', x: VIAL_DROP_X, y: VIAL_BOTTOM_Y })
+      director.cancel(vampire)
+      effects.add({ kind: 'fume', x: Math.round(vampire.x) + (vampire.facing === 1 ? 11 : -3), y: FEET_Y - 3 })
+      effects.add({ kind: 'drop', x: VIAL_DROP_X, y: VIAL_BOTTOM_Y })
       recoil(vampire)
+      journal.push(label ? `Garlic: ${label} failed` : 'Garlic: a tool call failed')
     },
 
     arrive(): void {
-      spawnVillager()
+      population.spawn({ width: columns })
+      journal.push('A villager arrives with your prompt')
     },
 
     celebrate(): void {
       isPerchRequested = true
+      journal.push('Turn done: the vampire spreads its cape at the castle')
     },
 
     stats(): NightStats {
@@ -121,35 +135,52 @@ export function createNight() {
       return { blood, feeds, garlic: garlicHits, lifetimeFeeds, night, percent }
     },
 
-    tick(options: { dtMs: number }): number {
-      const { dtMs } = options
+    summary(): string {
+      const { percent, night } = sky.state()
+      const skyText = percent === null ? 'dusk' : `context ${percent}%`
+      return `Night ${night} · ${skyText} · blood ${blood}% · ${feeds} feeds · ${describeDoing({ activity: director.current(), vampire })}`
+    },
+
+    log(): readonly string[] {
+      return journal.lines()
+    },
+
+    tick(tickOptions: { dtMs: number }): number {
+      const { dtMs } = tickOptions
       hungerMs += dtMs
       if (hungerMs >= HUNGER_MS) {
         hungerMs = 0
         blood = Math.max(0, blood - 1)
       }
-      keepVillagersAround(dtMs)
-      const target = queuedFeeds > 0 ? nearestWalking({ villagers, x: vampire.x }) : undefined
-      const perchX = isPerchRequested && queuedFeeds === 0 ? columns - CASTLE_WIDTH - PERCH_OFFSET : undefined
-      const current = villagers.find(villager => villager.id === vampire.targetId)
-      const step = advanceVampire({ vampire, dtMs, plan: { target, perchX }, target: current })
+      population.keepAround({ dtMs, width: columns, wanted: queuedLabels.length })
+      const target = queuedLabels.length > 0 ? population.nearestWalking(vampire.x) : undefined
+      const perchX = isPerchRequested && queuedLabels.length === 0 ? columns - CASTLE_WIDTH - PERCH_OFFSET : undefined
+      const step = advanceVampire({ vampire, dtMs, plan: { target, perchX }, target: population.find(vampire.targetId) })
       if (vampire.landsPerched) {
         isPerchRequested = false
       }
       if (step.didTransform) {
-        addEffect({ kind: 'poof', x: Math.round(vampire.x) + 6, y: FEET_Y - 5 - Math.round(vampire.lift) })
+        effects.add({ kind: 'poof', x: Math.round(vampire.x) + 6, y: FEET_Y - 5 - Math.round(vampire.lift) })
       }
-      const victim = villagers.find(villager => villager.id === step.bittenId)
+      const victim = step.bittenId === undefined ? undefined : population.bite({ id: step.bittenId, fromX: vampire.x })
       if (victim) {
-        biteVillager({ villager: victim, fromX: vampire.x })
-        addEffect({ kind: 'spark', x: Math.round(victim.x) + 2, y: FEET_Y - 4 })
+        effects.add({ kind: 'spark', x: Math.round(victim.x) + 2, y: FEET_Y - 4 })
       }
       if (step.didFinishFeed) {
-        queuedFeeds = Math.max(0, queuedFeeds - 1)
-        completeFeed()
+        const [label, ...rest] = queuedLabels
+        queuedLabels = rest
+        completeFeed(label === '' ? undefined : label)
       }
-      villagers = advanceVillagers({ villagers, dtMs, width: columns })
-      effects = advanceEffects({ effects, dtMs })
+      runAmbient(dtMs)
+      const vignette = scenery.advance({ dtMs, width: columns })
+      if (vignette) {
+        journal.push(VIGNETTE_LINES[vignette])
+      }
+      population.advance({ dtMs, width: columns }).forEach(door => {
+        effects.add({ kind: 'light', x: door, y: FEET_Y - 3 })
+        journal.push('The lantern bearer slams a door just in time')
+      })
+      effects.advance(dtMs)
       const finished = finishedFeeds
       finishedFeeds = 0
       return finished
@@ -157,7 +188,7 @@ export function createNight() {
 
     frame(): Bitmap {
       clearBitmap(bitmap)
-      drawScene({ bitmap, percent: sky.state().percent, blood, vampire, villagers, effects })
+      drawScene({ bitmap, percent: sky.state().percent, blood, vampire, villagers: population.villagers(), effects: effects.list(), scenery: scenery.state() })
       return bitmap
     },
   }

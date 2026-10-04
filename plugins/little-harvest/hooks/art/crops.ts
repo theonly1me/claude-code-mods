@@ -21,6 +21,15 @@ const PALETTE: Readonly<Record<string, Color>> = {
   k: 0xefe1b0,
 }
 
+export const PRODUCE_COLORS: Record<CropKind, Color> = {
+  pumpkin: 0xf08a24,
+  corn: 0xf7d038,
+  sunflower: 0xffd23f,
+  tulip: 0xe2435c,
+  wheat: 0xf0d277,
+  carrot: 0xff8c2a,
+}
+
 const SEED = ['.k...', '..k.k']
 const SPROUT = ['.l.l.', '..G..', '..G..']
 

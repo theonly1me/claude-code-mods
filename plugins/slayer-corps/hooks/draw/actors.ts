@@ -3,7 +3,8 @@ import { setPixel, stamp } from '../shared/pixel/bitmap'
 import type { Bitmap } from '../shared/pixel/bitmap'
 import { toRadians } from '../shared/pixel/colors'
 import { drawGlyphRows } from '../shared/pixel/font'
-import { DOZE_AFTER_MS, GROUND_TOP, SLAYER_HEIGHT, STRIKE_MS } from '../sim/constants'
+import { formationIndex } from '../sim/actors'
+import { GROUND_TOP, SLAYER_HEIGHT, STRIKE_MS } from '../sim/constants'
 import type { Actor, AttackKind } from '../sim/types'
 
 const Z_ROWS = ['###', '.#.', '###']
@@ -30,6 +31,9 @@ function drawBlade(options: { bitmap: Bitmap; actor: Actor; x: number; y: number
 
 const ARCS: Partial<Record<AttackKind, { radius: number; colors: readonly number[] }>> = {
   water: { radius: 6, colors: [0xffffff, 0x90e0ef, 0x00b4d8, 0x0077b6] },
+  flame: { radius: 5, colors: [0xffe5ec, 0xff85a1, 0xff4d6d, 0xc9184a] },
+  thunder: { radius: 5, colors: [0xffffff, 0xfff3b0, 0xffd60a] },
+  beast: { radius: 6, colors: [0xffffff, 0xced4da, 0x868e96] },
   sun: { radius: 8, colors: [0xfff3b0, 0xffba08, 0xe85d04, 0x9d0208] },
   blaze: { radius: 7, colors: [0xffd166, 0xf77f00, 0xd62828, 0x6a040f] },
 }
@@ -71,24 +75,37 @@ function drawBolt(options: { bitmap: Bitmap; actor: Actor; y: number }): void {
 }
 
 function drawDoze(options: { bitmap: Bitmap; x: number; y: number; clockMs: number }): void {
-  const rise = Math.floor(options.clockMs / 260) % 6
-  drawGlyphRows({ bitmap: options.bitmap, rows: Z_ROWS, x: options.x + 6, y: options.y - 1 - rise, color: 0xdee2e6 })
+  const rise = Math.floor(options.clockMs / 240) % 4
+  drawGlyphRows({ bitmap: options.bitmap, rows: Z_ROWS, x: options.x + 7 + Math.floor(rise / 2), y: options.y + 3 - rise, color: 0xdee2e6 })
 }
 
-export function drawActors(options: { bitmap: Bitmap; actors: readonly Actor[]; clockMs: number; idleMs: number; isCelebrating: boolean }): void {
+function idleSway(options: { actor: Actor; clockMs: number }): { x: number; y: number } {
+  const { actor, clockMs } = options
+  if (actor.mode !== 'home') {
+    return { x: 0, y: 0 }
+  }
+  const index = formationIndex(actor.name)
+  return {
+    x: Math.round(Math.sin(clockMs / 1500 + index * 1.9) * 1.2),
+    y: -(Math.floor((clockMs + index * 260) / 480) % 2),
+  }
+}
+
+export function drawActors(options: { bitmap: Bitmap; actors: readonly Actor[]; clockMs: number; isCelebrating: boolean }): void {
   const { bitmap, clockMs } = options
   const ordered = [...options.actors].sort((first, second) => Number(first.mode !== 'home') - Number(second.mode !== 'home'))
   ordered.forEach(actor => {
     if (actor.mode === 'offstage') {
       return
     }
-    const isMoving = actor.mode === 'dash' || actor.mode === 'return'
-    const isDozing = actor.name === 'zenitsu' && actor.mode === 'home' && options.idleMs > DOZE_AFTER_MS
+    const isMoving = actor.mode === 'dash' || actor.mode === 'return' || actor.mode === 'hop'
+    const isDozing = actor.mode === 'doze'
     const sprite = slayerSprite({ name: actor.name, isStriding: isMoving && Math.floor(clockMs / 110) % 2 === 0, isDozing })
     const isStaggered = actor.mode === 'stagger'
-    const x = Math.round(actor.x) - (isStaggered ? 2 : 0)
+    const sway = options.isCelebrating ? { x: 0, y: 0 } : idleSway({ actor, clockMs })
+    const x = Math.round(actor.x) - (isStaggered ? 2 : 0) + sway.x
     const hop = options.isCelebrating ? Math.round(Math.abs(Math.sin(clockMs / 170 + actor.homeX)) * 3) : 0
-    const y = GROUND_TOP - SLAYER_HEIGHT - actor.lift - hop
+    const y = GROUND_TOP - SLAYER_HEIGHT - actor.lift - hop + sway.y
     const isFlashing = isStaggered && Math.floor(actor.modeMs / 70) % 2 === 0
     stamp({ target: bitmap, source: sprite, x, y, tint: isFlashing ? () => 0xffffff : undefined })
     drawFormArc({ bitmap, actor, x, y })

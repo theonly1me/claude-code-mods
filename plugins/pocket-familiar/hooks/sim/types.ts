@@ -14,6 +14,26 @@ export type Growth = { form: GrowthForm; tails: number; title: string; minimumXp
 
 export type Mood = 'asleep' | 'needs a break' | 'worried' | 'hungry' | 'tired' | 'happy' | 'content'
 
+export type EyeState = 'open' | 'shut' | 'happy'
+
+export type AmbientKind = 'butterfly' | 'leaf' | 'yarn' | 'tail' | 'groom' | 'dig' | 'stretch' | 'stars' | 'nap'
+
+export type AmbientPhase = AmbientKind | 'look'
+
+export type AmbientState = {
+  kind: AmbientPhase
+  ms: number
+  durationMs: number
+  foxX: number
+  fromX: number
+  targetX: number
+  seed: number
+  last: AmbientKind | undefined
+  count: number
+}
+
+export type LogEntry = { text: string; count: number }
+
 export type FamiliarState = {
   stats: Stats
   lifetimeXp: number
@@ -29,6 +49,9 @@ export type FamiliarState = {
   bubble: Bubble | undefined
   clockMs: number
   hour: number
+  width: number
+  ambient: AmbientState
+  log: LogEntry[]
   evolutions: Growth[]
 }
 

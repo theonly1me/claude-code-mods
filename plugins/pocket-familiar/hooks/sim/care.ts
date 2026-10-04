@@ -1,5 +1,7 @@
-import { BUBBLE_MS, FAILURES_FOR_DUCK, HOP_MS, IDLE_SLEEP_MS, WORRY_MS } from './constants'
+import { createAmbient } from './ambient'
+import { BUBBLE_MS, FAILURES_FOR_DUCK, HOP_MS, IDLE_SLEEP_MS, MAX_COLUMNS, WORRY_MS } from './constants'
 import { growthOf } from './growth'
+import { pushLog } from './log'
 import { addStats, drift, STARTING_STATS } from './stats'
 import type { BubbleGlyph, FamiliarState, ToolKind } from './types'
 
@@ -21,6 +23,9 @@ export function createState(): FamiliarState {
     bubble: undefined,
     clockMs: 0,
     hour: 21,
+    width: MAX_COLUMNS,
+    ambient: createAmbient(1),
+    log: [],
     evolutions: [],
   }
 }
@@ -31,6 +36,9 @@ function react(options: { state: FamiliarState; glyph: BubbleGlyph }): void {
 
 function wake(state: FamiliarState): void {
   state.idleMs = 0
+  if (state.isSleeping) {
+    pushLog({ log: state.log, text: 'Woke up' })
+  }
   state.isSleeping = false
 }
 
@@ -43,6 +51,7 @@ function gainXp(options: { state: FamiliarState; amount: number }): void {
     state.evolutions.push(after)
     state.hopMs = HOP_MS
     react({ state, glyph: 'alert' })
+    pushLog({ log: state.log, text: `Grew into a ${after.title}` })
   }
 }
 
@@ -55,6 +64,18 @@ export function noteToolStart(options: { state: FamiliarState; kind: ToolKind })
   }
 }
 
+function noteFailure(state: FamiliarState): void {
+  state.failureStreak += 1
+  state.worriedMs = WORRY_MS
+  const isDuckArriving = state.failureStreak >= FAILURES_FOR_DUCK && !state.hasDuck
+  state.hasDuck = state.hasDuck || isDuckArriving
+  react({ state, glyph: isDuckArriving ? 'alert' : 'question' })
+  pushLog({
+    log: state.log,
+    text: isDuckArriving ? `Brought a rubber duck after ${FAILURES_FOR_DUCK} failures` : 'Got worried: a tool call failed',
+  })
+}
+
 export function noteToolEnd(options: { state: FamiliarState; kind: ToolKind; isFailure: boolean; isCreation: boolean }): void {
   const { state, kind } = options
   wake(state)
@@ -63,11 +84,7 @@ export function noteToolEnd(options: { state: FamiliarState; kind: ToolKind; isF
     state.activity = state.isTurnRunning ? 'thinking' : 'idle'
   }
   if (options.isFailure) {
-    state.failureStreak += 1
-    state.worriedMs = WORRY_MS
-    const isDuckArriving = state.failureStreak >= FAILURES_FOR_DUCK && !state.hasDuck
-    state.hasDuck = state.hasDuck || isDuckArriving
-    react({ state, glyph: isDuckArriving ? 'alert' : 'question' })
+    noteFailure(state)
     return
   }
   const hadDuck = state.hasDuck
@@ -76,11 +93,14 @@ export function noteToolEnd(options: { state: FamiliarState; kind: ToolKind; isF
   if (kind === 'test') {
     state.stats = addStats({ stats: state.stats, change: { fullness: 12, joy: 2 } })
     react({ state, glyph: 'heart' })
+    pushLog({ log: state.log, text: 'Ate well: your tests passed' })
   } else if (options.isCreation) {
     state.stats = addStats({ stats: state.stats, change: { joy: 6 } })
     react({ state, glyph: 'note' })
+    pushLog({ log: state.log, text: 'Celebrated a new file' })
   } else if (hadDuck) {
     react({ state, glyph: 'heart' })
+    pushLog({ log: state.log, text: 'Put the duck away: it works again' })
   }
   gainXp({ state, amount: kind === 'test' ? XP.test : XP.tool })
 }
@@ -105,6 +125,7 @@ export function noteTurnEnd(options: { state: FamiliarState; isSuccess: boolean 
   }
   state.stats = addStats({ stats: state.stats, change: { joy: 4 } })
   state.hopMs = HOP_MS
+  pushLog({ log: state.log, text: 'Cheered: Claude finished a turn' })
   gainXp({ state, amount: XP.turn })
 }
 
@@ -120,6 +141,7 @@ export function advance(options: { state: FamiliarState; dtMs: number }): void {
   if (!state.isSleeping && state.idleMs >= IDLE_SLEEP_MS) {
     state.isSleeping = true
     state.activity = 'idle'
+    pushLog({ log: state.log, text: 'Fell asleep after five quiet minutes' })
   }
   state.stats = drift({ stats: state.stats, dtMs, isSleeping: state.isSleeping })
   state.worriedMs = Math.max(0, state.worriedMs - dtMs)

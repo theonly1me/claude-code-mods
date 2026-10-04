@@ -1,7 +1,7 @@
 {
   "name": "little-harvest",
-  "version": "0.3.0",
-  "description": "Every file that changes becomes a crop: Claude's edits and yours grow a farm above the prompt, tests bring sun or storms, and passing turns fill the barn.",
+  "version": "0.4.0",
+  "description": "Every file that changes becomes a crop: Claude's edits and yours grow a farm in its own pane, tests bring sun or storms, and passing turns fill the barn.",
   "author": {
     "name": "Atchyut"
   },

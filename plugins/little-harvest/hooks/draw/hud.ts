@@ -29,8 +29,10 @@ function drawBasket(options: { bitmap: Bitmap; x: number; y: number }): void {
 }
 
 export function drawHud(options: { bitmap: Bitmap; bushels: number }): void {
-  drawBasket({ bitmap: options.bitmap, x: 1, y: 1 })
-  shadowText({ bitmap: options.bitmap, text: String(options.bushels), x: 8, y: 0, color: CREAM })
+  const text = String(options.bushels)
+  const x = barnX(options.bitmap.width) - textWidth(text) - 9
+  drawBasket({ bitmap: options.bitmap, x, y: 1 })
+  shadowText({ bitmap: options.bitmap, text, x: x + 7, y: 0, color: CREAM })
 }
 
 export function drawEffects(options: { bitmap: Bitmap; pops: readonly Pop[]; harvest: Harvest | undefined }): void {

@@ -22,7 +22,7 @@ function runUntilKills(options: {
 
 test('a finished action kills its monster exactly once', () => {
   const dojo = createDojo()
-  const id = dojo.spawn({ isElite: false })
+  const id = dojo.spawn({ isElite: false, label: 'Read' })
   dojo.defeat({ id, isFailure: false })
 
   const { kills } = runUntilKills({ dojo, count: 1 })
@@ -30,24 +30,22 @@ test('a finished action kills its monster exactly once', () => {
 
   expect(kills.length).toBe(1)
   expect(laterKills.length).toBe(0)
-  expect(dojo.tally().codex + dojo.tally().gemini).toBe(1)
+  expect(dojo.tally().codex + dojo.tally().gemini + dojo.tally().chatgpt).toBe(1)
 })
 
-test('monsters alternate between Codex and Gemini', () => {
+test('work monsters rotate through Codex, Gemini, and ChatGPT', () => {
   const dojo = createDojo()
-  const first = dojo.spawn({ isElite: false })
-  const second = dojo.spawn({ isElite: false })
-  dojo.defeat({ id: first, isFailure: false })
-  dojo.defeat({ id: second, isFailure: false })
+  const ids = [1, 2, 3].map(() => dojo.spawn({ isElite: false, label: 'Read' }))
+  ids.forEach(id => dojo.defeat({ id, isFailure: false }))
 
-  runUntilKills({ dojo, count: 2 })
+  runUntilKills({ dojo, count: 3 })
 
-  expect(dojo.tally()).toEqual({ codex: 1, gemini: 1 })
+  expect(dojo.tally()).toEqual({ codex: 1, gemini: 1, chatgpt: 1 })
 })
 
 test('a monster waits alive until its action finishes', () => {
   const dojo = createDojo()
-  dojo.spawn({ isElite: false })
+  dojo.spawn({ isElite: false, label: 'Read' })
 
   const { kills } = runUntilKills({ dojo, count: 1 })
 
@@ -56,9 +54,9 @@ test('a monster waits alive until its action finishes', () => {
 
 test('a failed action takes a parried strike before the kill', () => {
   const clean = createDojo()
-  clean.defeat({ id: clean.spawn({ isElite: false }), isFailure: false })
+  clean.defeat({ id: clean.spawn({ isElite: false, label: 'Read' }), isFailure: false })
   const failing = createDojo()
-  failing.defeat({ id: failing.spawn({ isElite: false }), isFailure: true })
+  failing.defeat({ id: failing.spawn({ isElite: false, label: 'Bash' }), isFailure: true })
 
   const cleanRun = runUntilKills({ dojo: clean, count: 1 })
   const failingRun = runUntilKills({ dojo: failing, count: 1 })
@@ -69,9 +67,9 @@ test('a failed action takes a parried strike before the kill', () => {
 
 test('an elite monster takes two strikes', () => {
   const clean = createDojo()
-  clean.defeat({ id: clean.spawn({ isElite: false }), isFailure: false })
+  clean.defeat({ id: clean.spawn({ isElite: false, label: 'Read' }), isFailure: false })
   const elite = createDojo()
-  elite.defeat({ id: elite.spawn({ isElite: true }), isFailure: false })
+  elite.defeat({ id: elite.spawn({ isElite: true, label: 'Agent' }), isFailure: false })
 
   const cleanRun = runUntilKills({ dojo: clean, count: 1 })
   const eliteRun = runUntilKills({ dojo: elite, count: 1 })
@@ -83,7 +81,7 @@ test('an elite monster takes two strikes', () => {
 test('a burst past the alive cap still counts every kill', () => {
   const dojo = createDojo()
   const burst = MAX_ALIVE_MONSTERS + 3
-  const ids = Array.from({ length: burst }, () => dojo.spawn({ isElite: false }))
+  const ids = Array.from({ length: burst }, () => dojo.spawn({ isElite: false, label: 'Read' }))
   ids.forEach(id => dojo.defeat({ id, isFailure: false }))
 
   const { kills } = runUntilKills({ dojo, count: burst })

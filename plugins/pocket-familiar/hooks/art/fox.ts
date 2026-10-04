@@ -1,5 +1,6 @@
 import { parsePixelMap, replaceRows } from '../shared/pixel/sprite'
 import type { Bitmap, Color } from '../shared/pixel/bitmap'
+import type { EyeState } from '../sim/types'
 
 export const FUR: Color = 0xe8833a
 export const FUR_SHADE: Color = 0xc4622a
@@ -58,8 +59,6 @@ const EGG_ROWS = [
   '..cdd..',
 ]
 
-export type EyeState = 'open' | 'shut' | 'happy'
-
 function foxEyes(eyes: EyeState): readonly string[] {
   if (eyes === 'happy') {
     return FOX_EYES_HAPPY
@@ -85,6 +84,11 @@ const KIT_SHUT = parsePixelMap({
   palette: PALETTE,
 })
 
+const KIT_HAPPY = parsePixelMap({
+  rows: replaceRows({ rows: KIT_ROWS, replacements: { OkwOOOkwO: 'OOkOOOkOO', OkkOOOkkO: 'OkOkOkOkO' } }),
+  palette: PALETTE,
+})
+
 export const EGG = parsePixelMap({ rows: EGG_ROWS, palette: PALETTE })
 
 export function foxSprite(eyes: EyeState): Bitmap {
@@ -92,6 +96,9 @@ export function foxSprite(eyes: EyeState): Bitmap {
 }
 
 export function kitSprite(eyes: EyeState): Bitmap {
+  if (eyes === 'happy') {
+    return KIT_HAPPY
+  }
   return eyes === 'open' ? KIT_OPEN : KIT_SHUT
 }
 

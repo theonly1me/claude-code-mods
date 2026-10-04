@@ -1,61 +1,60 @@
 import { clearBitmap, createBitmap } from '../shared/pixel/bitmap'
 import type { Bitmap } from '../shared/pixel/bitmap'
-import { drawScene } from '../draw/scene'
-import { chapterAt, maxHpFor } from '../story/campaign'
-import { freshProgress, nextChapter } from '../story/progress'
-import { advanceActor, createActors, isBusy, launch, placeFormation, stagger } from './actors'
+import { drawBattle } from '../draw/battleView'
+import { createActors, interruptSparring, isAtRest, isBusy, isWorking, laneFor, launch, placeFormation, stagger } from './actors'
 import {
-  ARRIVING_MS, COUNTER_MS, DAWN_MS, DEMON_RIGHT_MARGIN, DEMON_WIDTH, DYING_MS, FLASH_MS,
-  GROUND_TOP, MAX_COLUMNS, MAX_HEARTS, MAX_QUEUE, REGROUP_HEAL, SLAYER_WIDTH, STAGE_HEIGHT,
+  COUNTER_MS, DEMON_RIGHT_MARGIN, DEMON_WIDTH, GROUND_TOP, LOG_LIMIT, MAX_COLUMNS, MAX_QUEUE, RECOIL_MS, SLAYER_WIDTH,
+  STAGE_HEIGHT,
 } from './constants'
-import { NEZUKO_KICK, SUN_DANCE, attackFor } from './moves'
-import { advanceParticles, ashBurst, attackBurst, clawBurst } from './particles'
-import type { Attack, BattlePhase, Particle, Progress, StoryEvent } from './types'
+import { createDirector } from './director'
+import { createLog } from './log'
+import { advanceActor } from './motion'
+import { NEZUKO_KICK, SUN_DANCE, isCorpsMember, rememberAttacker, workAttack } from './moves'
+import type { CorpsMember } from './moves'
+import { counterLine, sparringLine } from './narration'
+import { advanceParticles, ashBurst, attackBurst, clawBurst, parryBurst } from './particles'
+import { createProgression } from './progression'
+import type { Actor, Attack, Particle } from './types'
 
 export function createBattle() {
   let width = MAX_COLUMNS
   let bitmap = createBitmap({ width, height: STAGE_HEIGHT })
-  let progress: Progress = freshProgress()
+  const log = createLog(LOG_LIMIT)
+  const story = createProgression(log)
   const actors = createActors(width)
+  const director = createDirector()
+  let recent: CorpsMember[] = []
   let queue: Attack[] = []
   let counters = 0
   let counterMs = 0
+  let swipeMs = 0
+  let recoilMs = 0
   let particles: Particle[] = []
-  let events: StoryEvent[] = []
-  let phase: BattlePhase = 'fighting'
-  let phaseMs = 0
   let clockMs = 0
-  let flashMs = 0
-  let idleMs = 0
-  let hearts = MAX_HEARTS
-  let shownHp = progress.demonHp
 
   const demonX = (): number => width - DEMON_WIDTH - DEMON_RIGHT_MARGIN
-  const maxHp = (): number => maxHpFor(progress)
 
-  function damage(amount: number): void {
-    if (phase !== 'fighting') {
+  function damage(attack: Attack): void {
+    if (!story.damage(attack)) {
       return
     }
-    progress = { ...progress, demonHp: Math.max(0, progress.demonHp - amount), attacks: progress.attacks + 1 }
-    flashMs = FLASH_MS
-    if (progress.demonHp === 0) {
-      phase = 'dying'
-      phaseMs = 0
-      queue = []
-      counters = 0
-      particles.push(...ashBurst({ x: demonX(), y: 1, width: DEMON_WIDTH, height: 12, seed: progress.chapter }))
-      events.push({ kind: 'defeated', chapter: progress.chapter })
-    }
+    queue = []
+    counters = 0
+    interruptSparring(actors)
+    particles.push(...ashBurst({ x: demonX(), y: 1, width: DEMON_WIDTH, height: 12, seed: story.progress().chapter }))
   }
 
   function enqueue(attack: Attack): void {
-    idleMs = 0
+    interruptSparring(actors)
     if (queue.length >= MAX_QUEUE) {
-      damage(attack.damage)
+      damage(attack)
       return
     }
     queue.push(attack)
+  }
+
+  function crossesMidpoint(options: { remainingMs: number; dtMs: number }): boolean {
+    return options.remainingMs > COUNTER_MS / 2 && options.remainingMs - options.dtMs <= COUNTER_MS / 2
   }
 
   function counterHit(): void {
@@ -63,43 +62,40 @@ export function createBattle() {
     if (target) {
       stagger(target)
       particles.push(...clawBurst({ x: target.x + 1, y: GROUND_TOP - 10 }))
+      log.add(counterLine({ demon: story.chapter().demon, target: target.name }))
     }
-    hearts -= 1
-    if (hearts <= 0) {
-      hearts = MAX_HEARTS
-      progress = { ...progress, demonHp: Math.min(maxHp(), Math.round(progress.demonHp + maxHp() * REGROUP_HEAL)) }
-      events.push({ kind: 'regroup' })
-    }
+    story.loseHeart()
   }
 
-  function advancePhase(): void {
-    if (phase === 'dying' && phaseMs >= DYING_MS) {
-      const next = nextChapter(progress)
-      progress = next.progress
-      shownHp = progress.demonHp
-      phase = next.isDawn ? 'dawn' : 'arriving'
-      phaseMs = 0
-      events.push(next.isDawn ? { kind: 'dawn' } : { kind: 'chapter', chapter: progress.chapter })
-    } else if (phase === 'dawn' && phaseMs >= DAWN_MS) {
-      phase = 'arriving'
-      phaseMs = 0
-      events.push({ kind: 'chapter', chapter: progress.chapter })
-    } else if (phase === 'arriving' && phaseMs >= ARRIVING_MS) {
-      phase = 'fighting'
-      phaseMs = 0
+  function advanceSwipe(dtMs: number): void {
+    const dodger = actors.find(candidate => candidate.mode === 'hop')
+    if (swipeMs > 0 && dodger && crossesMidpoint({ remainingMs: swipeMs, dtMs })) {
+      particles.push(...clawBurst({ x: dodger.homeX + 1, y: GROUND_TOP - 10 }))
     }
+    swipeMs = Math.max(0, swipeMs - dtMs)
+  }
+
+  function startSparring(): void {
+    const attack = director.plan()
+    const attacker = actors.find(candidate => candidate.name === attack.attacker)
+    if (!attacker || attacker.mode !== 'home') {
+      return
+    }
+    launch({ actor: attacker, attack })
+    swipeMs = attack.style === 'dodge' ? COUNTER_MS : 0
+    log.add(sparringLine({ attack, demon: story.chapter().demon }))
   }
 
   function advanceFight(dtMs: number): void {
     if (counterMs > 0) {
-      const wasBeforeHit = counterMs > COUNTER_MS / 2
+      const isHitNow = crossesMidpoint({ remainingMs: counterMs, dtMs })
       counterMs -= dtMs
-      if (wasBeforeHit && counterMs <= COUNTER_MS / 2) {
+      if (isHitNow) {
         counterHit()
       }
       return
     }
-    if (actors.some(isBusy)) {
+    if (actors.some(isWorking)) {
       return
     }
     if (counters > 0) {
@@ -107,10 +103,30 @@ export function createBattle() {
       counterMs = COUNTER_MS
       return
     }
-    const attack = queue.shift()
-    const attacker = attack ? actors.find(candidate => candidate.name === attack.attacker) : undefined
-    if (attack && attacker) {
-      launch({ actor: attacker, attack })
+    const [attack] = queue
+    if (attack) {
+      const attacker = actors.find(candidate => candidate.name === attack.attacker)
+      if (attacker && isAtRest(attacker)) {
+        queue.shift()
+        launch({ actor: attacker, attack })
+      }
+      return
+    }
+    if (!actors.some(isBusy) && swipeMs <= 0 && director.wait(dtMs)) {
+      startSparring()
+    }
+  }
+
+  function impact(options: { actor: Actor; attack: Attack }): void {
+    const { actor, attack } = options
+    if (attack.style === 'hit') {
+      particles.push(...attackBurst({ kind: attack.kind, x: demonX() + 4, y: GROUND_TOP - 7, seed: story.progress().attacks }))
+      damage(attack)
+    } else if (attack.style === 'clash' || attack.style === 'doze') {
+      particles.push(...parryBurst({ x: demonX() + 1, y: GROUND_TOP - 8, seed: clockMs }))
+      recoilMs = RECOIL_MS
+    } else {
+      particles.push(...attackBurst({ kind: attack.kind, x: actor.x + SLAYER_WIDTH + 2, y: GROUND_TOP - 7, seed: clockMs }))
     }
   }
 
@@ -122,75 +138,52 @@ export function createBattle() {
         placeFormation({ actors, width })
       }
     },
-    restore(saved: Progress): void {
-      progress = saved
-      shownHp = saved.demonHp
-    },
-    progress: (): Progress => progress,
-    hearts: (): number => hearts,
-    phase: (): BattlePhase => phase,
+    restore: story.restore,
+    progress: story.progress,
+    hearts: story.hearts,
+    phase: story.phase,
+    takeEvents: story.takeEvents,
+    log: log.lines,
+    actors: (): readonly Actor[] => actors,
     strike(options: { tool: string; isFailure: boolean }): void {
+      interruptSparring(actors)
       if (options.isFailure) {
-        idleMs = 0
         counters = Math.min(MAX_QUEUE, counters + 1)
         return
       }
-      enqueue(attackFor(options.tool))
+      const attack = workAttack({ tool: options.tool, recent })
+      if (isCorpsMember(attack.attacker)) {
+        recent = rememberAttacker({ recent, attacker: attack.attacker })
+      }
+      enqueue(attack)
     },
-    summonNezuko: (): void => enqueue(NEZUKO_KICK),
+    summonNezuko(): void {
+      recent = rememberAttacker({ recent, attacker: 'nezuko' })
+      enqueue(NEZUKO_KICK)
+    },
     finish(): void {
-      hearts = Math.min(MAX_HEARTS, hearts + 1)
+      story.gainHeart()
       enqueue(SUN_DANCE)
-    },
-    takeEvents(): StoryEvent[] {
-      const taken = events
-      events = []
-      return taken
     },
     tick(dtMs: number): void {
       clockMs += dtMs
-      phaseMs += dtMs
-      idleMs += dtMs
-      flashMs = Math.max(0, flashMs - dtMs)
-      shownHp = Math.max(progress.demonHp, shownHp - (dtMs / 1000) * maxHp() * 0.4)
+      recoilMs = Math.max(0, recoilMs - dtMs)
       particles = advanceParticles({ particles, dtMs })
-      advancePhase()
-      if (phase === 'fighting') {
+      story.advance(dtMs)
+      if (story.phase() === 'fighting') {
+        advanceSwipe(dtMs)
         advanceFight(dtMs)
       }
       actors.forEach(actor => {
-        const step = advanceActor({ actor, dtMs, targetX: demonX() - SLAYER_WIDTH - 1 })
+        const step = advanceActor({ actor, dtMs, frontX: demonX() - SLAYER_WIDTH - 1, laneX: laneFor(width) })
         if (step.didImpact && actor.attack) {
-          particles.push(...attackBurst({ kind: actor.attack.kind, x: demonX() + 4, y: GROUND_TOP - 7, seed: progress.attacks }))
-          damage(actor.attack.damage)
+          impact({ actor, attack: actor.attack })
         }
       })
     },
     frame(): Bitmap {
       clearBitmap(bitmap)
-      const chapter = chapterAt(progress.chapter)
-      const lunge = counterMs > 0 ? Math.round(Math.sin(((COUNTER_MS - counterMs) / COUNTER_MS) * Math.PI) * -10) : 0
-      const arrival = phase === 'arriving' ? Math.round((1 - phaseMs / ARRIVING_MS) * 24) : 0
-      drawScene({
-        bitmap,
-        clockMs,
-        chapter,
-        chapterNumber: progress.chapter + 1,
-        cycle: progress.cycle,
-        phase,
-        dawn: phase === 'dawn' ? Math.min(1, phaseMs / 1500, (DAWN_MS - phaseMs) / 1500 + 0.3) : 0,
-        dissolve: phase === 'dying' ? Math.min(1, phaseMs / (DYING_MS * 0.7)) : 0,
-        actors,
-        particles,
-        demonX: demonX() + lunge + arrival,
-        isDemonFlashing: flashMs > 0,
-        isTrueForm: chapter.shape === 'muzan' && progress.demonHp < maxHp() / 2,
-        hearts,
-        hp: progress.demonHp,
-        shownHp,
-        maxHp: maxHp(),
-        idleMs,
-      })
+      drawBattle({ bitmap, story, actors, particles, clockMs, demonX: demonX(), lungeMs: Math.max(counterMs, swipeMs), isRecoiling: recoilMs > 0 })
       return bitmap
     },
   }
