@@ -102,9 +102,9 @@ Scope Guard remembers what you asked for. When Claude edits a file you did not m
 
 ### Looks
 
-![Looks with a theme on](plugins/looks/assets/preview.png)
+![Looks with the Synthwave theme](plugins/looks/assets/preview.png)
 
-Looks makes the transcript look the way you like. Themes restyle your prompt rows, the reply frame, and the hint line, and keep Claude Code's own spinner words unless you turn on `themeWords`, and set a matching Claude Code base theme. Tool calls get a header line with their output in a short bar under it. Two more changes are off by default and you turn them on in `/plugin`: `toolCalls: compact` makes each tool call one line, and `layout: centered` centers replies at a comfortable width.
+Looks makes the transcript look the way you like. Each theme gives you name tags, a framed reply panel, a themed divider between turns, and a small animated pixel scene above the prompt (a neon sun for Synthwave, a phosphor terminal for Retro CRT, a torn-paper banner for Punk, an ensō for Zen paper). Claude Code's own spinner words stay unless you turn on `themeWords`. Themes also set a matching Claude Code base theme. Tool calls get a header line with their output in a short bar under it. Two more changes are off by default and you turn them on in `/plugin`: `toolCalls: compact` makes each tool call one line, and `layout: centered` centers replies at a comfortable width.
 
 - **Use:** `/theme` (or `/looks`) opens the picker. `/theme retro`, `/theme punk`, `/theme synthwave`, `/theme zen`, and `/theme off` switch directly. `/theme off` puts your own base theme back, and `/theme base` opens Claude Code's own theme list.
 - **Interact:** in the picker, press `r`, `p`, `s`, or `z` to apply a theme and `o` to turn themes off. Tab moves the preview between themes, `b` opens the base themes, and Esc closes the picker. ctrl+o shows the full tool rows.

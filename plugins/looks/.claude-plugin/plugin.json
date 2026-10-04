@@ -40,6 +40,13 @@
       "title": "Theme spinner words",
       "description": "Off keeps Claude Code's own spinner and turn footer words under every theme. On uses the theme's words, such as CRUISING or Shredded.",
       "default": false
+    },
+    "themeStyle": {
+      "type": "string",
+      "title": "Theme style",
+      "description": "rich gives each theme framed reply panels, name tags, themed dividers, and an animated pixel scene above the prompt. simple only recolors text.",
+      "default": "rich",
+      "options": ["rich", "simple"]
     }
   }
 }

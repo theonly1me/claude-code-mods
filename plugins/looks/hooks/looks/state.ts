@@ -1,9 +1,12 @@
+import { lookOf } from './look'
+import type { Look } from './look'
 import { paletteOf, themeChoiceFrom, themeOf } from './themes'
 import type { Palette, Theme, ThemeChoice, Tone } from './themes'
 
 export type ToolCallsMode = 'compact' | 'full' | 'plain'
 export type ToolView = 'compact' | 'tidy' | 'plain'
 export type LayoutMode = 'centered' | 'left'
+export type ThemeStyle = 'rich' | 'simple'
 
 export type LooksSettings = {
   theme: ThemeChoice
@@ -11,6 +14,7 @@ export type LooksSettings = {
   layout: LayoutMode
   readingWidth: number
   themeWords: boolean
+  themeStyle: ThemeStyle
 }
 
 export const SAVED_BASE_KEY = 'savedBaseTheme'
@@ -19,7 +23,7 @@ const DEFAULT_READING_WIDTH = 100
 const RESULT_LINES = 6
 const VERBOSE_RESULT_LINES = 30
 
-let settings: LooksSettings = { theme: 'off', toolCalls: 'full', layout: 'left', readingWidth: DEFAULT_READING_WIDTH, themeWords: false }
+let settings: LooksSettings = { theme: 'off', toolCalls: 'full', layout: 'left', readingWidth: DEFAULT_READING_WIDTH, themeWords: false, themeStyle: 'rich' }
 let activeTheme: ThemeChoice = 'off'
 let highlighted: ThemeChoice = 'retro'
 let tone: Tone = 'dark'
@@ -36,6 +40,7 @@ export function settingsFrom(options: Readonly<Record<string, unknown>>): LooksS
     layout: options.layout === 'centered' ? 'centered' : 'left',
     readingWidth: Number.isFinite(width) ? Math.max(MIN_READING_WIDTH, Math.round(width)) : DEFAULT_READING_WIDTH,
     themeWords: options.themeWords === true,
+    themeStyle: options.themeStyle === 'simple' ? 'simple' : 'rich',
   }
 }
 
@@ -71,10 +76,6 @@ export function setHighlighted(choice: ThemeChoice): boolean {
   const isChanged = highlighted !== choice
   highlighted = choice
   return isChanged
-}
-
-export function currentTone(): Tone {
-  return tone
 }
 
 export function setTone(next: Tone): void {
@@ -120,6 +121,14 @@ export function baseThemeInfo(): { current?: string; saved?: string } {
 
 export function setBaseThemeInfo(next: { current?: string; saved?: string }): void {
   baseInfo = next
+}
+
+export function currentLook(): Look | undefined {
+  return activeTheme !== 'off' && settings.themeStyle === 'rich' ? lookOf({ name: activeTheme, tone }) : undefined
+}
+
+export function currentTone(): Tone {
+  return tone
 }
 
 export function isThemeWords(): boolean {

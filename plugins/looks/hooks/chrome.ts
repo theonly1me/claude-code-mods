@@ -1,6 +1,7 @@
 import type { On } from 'claude-code'
 
-import { currentTheme, isThemeWords } from './looks/state'
+import { divider } from './looks/rich'
+import { currentLook, currentTheme, isThemeWords, looksSettings } from './looks/state'
 import { pickWord } from './looks/themes'
 
 export function installChrome(on: On): void {
@@ -15,6 +16,13 @@ export function installChrome(on: On): void {
 
   on('ui.render', { component: 'TurnDuration' }, async ($, e, next) => {
     const theme = currentTheme()
+    const look = currentLook()
+    if (e.surface === 'terminal' && look) {
+      const { Box, Text } = $.ui.resolve(e)
+      const width = Math.min(looksSettings().readingWidth, e.viewport?.columns ?? looksSettings().readingWidth)
+      const word = theme && isThemeWords() ? pickWord({ words: theme.doneWords, seed: e.requestId }) : e.props.word
+      return divider({ Box, Text, look, width, word, durationMs: e.props.durationMs })
+    }
     if (e.surface !== 'terminal' || !theme || !isThemeWords()) {
       return next(e)
     }

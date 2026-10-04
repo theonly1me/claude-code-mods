@@ -33,7 +33,7 @@ test('the defaults keep the engine reply at the left edge', async ($, on) => {
   expect(await reply.find({ text: 'engine row' })).toBeDefined()
 })
 
-test('with themeWords on, each theme redraws the prompt row, the spinner, the turn footer, and the hint tail', { options: { themeWords: true } }, async ($, on) => {
+test('with themeWords on, each theme redraws the prompt row, the spinner, the turn footer, and the hint tail', { options: { themeWords: true, themeStyle: 'simple' } }, async ($, on) => {
   const seen: { word: string; suffix: string; tail: string; done: string }[] = []
   on('ui.render', { component: 'Spinner' }, ($, event) => {
     seen.push({ word: event.props.word, suffix: event.props.suffix, tail: '', done: '' })
@@ -66,7 +66,7 @@ test('with themeWords on, each theme redraws the prompt row, the spinner, the tu
   }
 })
 
-test('by default a theme keeps the engine spinner and footer words', async ($, on) => {
+test('by default a theme keeps the engine spinner and footer words', { options: { themeStyle: 'simple' } }, async ($, on) => {
   const seen: { word: string; suffix: string; tail: string }[] = []
   on('ui.render', { component: 'Spinner' }, ($, event) => {
     seen.push({ word: event.props.word, suffix: event.props.suffix, tail: '' })

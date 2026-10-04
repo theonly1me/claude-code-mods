@@ -1,5 +1,6 @@
 import type { Register } from 'claude-code'
 
+import { installBanner } from './banner'
 import { installChrome } from './chrome'
 import { configureLooks, settingsFrom } from './looks/state'
 import { installReply } from './reply'
@@ -14,4 +15,5 @@ export const register: Register = (on, options) => {
   installRows(on)
   installReply(on)
   installChrome(on)
+  installBanner(on)
 }

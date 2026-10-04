@@ -2,6 +2,7 @@ import type { BoxProps, ElementConstructor, RenderElement, RenderNode, TextProps
 
 import { moreHint } from './result'
 import type { LineTone, ResultLine } from './result'
+import type { Look } from './look'
 import type { Palette, Theme } from './themes'
 import type { ToolState, ToolSummary } from './summary'
 
@@ -42,13 +43,18 @@ export function toolLine(options: {
   state: ToolState
   theme: Theme | undefined
   colors: Palette
+  look?: Look
 }): RenderElement {
   const { Text, summary, colors } = options
   const isFailed = options.state.isErrored || options.state.isInterrupted
   return (
     <Text wrap="truncate-end">
       <Text color={markColor({ state: options.state, colors })}>{`${options.theme?.toolMark ?? DEFAULT_TOOL_MARK} `}</Text>
-      <Text bold color={options.theme ? colors.secondary : undefined}>{summary.verb}</Text>
+      {options.look ? (
+        <Text bold color={options.look.chipText} backgroundColor={options.look.chipBackground}>{` ${summary.verb} `}</Text>
+      ) : (
+        <Text bold color={options.theme ? colors.secondary : undefined}>{summary.verb}</Text>
+      )}
       {summary.target !== '' && <Text>{`  ${summary.target}`}</Text>}
       {summary.added > 0 && <Text color={colors.added}>{`  +${summary.added}`}</Text>}
       {summary.removed > 0 && <Text color={colors.removed}>{`  -${summary.removed}`}</Text>}
@@ -104,9 +110,10 @@ export function resultBlock(options: {
   colors: Palette
   lines: readonly ResultLine[]
   more: number
+  look?: Look
 }): RenderElement {
   const { Box, Text, colors } = options
-  const bar = <Text color={colors.muted}>{'\u2502 '}</Text>
+  const bar = <Text color={options.look?.borderColor ?? colors.muted}>{`${options.look?.bar ?? '\u2502'} `}</Text>
   return (
     <Box flexDirection="column" paddingLeft={2}>
       {options.lines.map((line, index) => (

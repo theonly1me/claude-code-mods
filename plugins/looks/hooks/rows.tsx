@@ -3,7 +3,7 @@ import type { On } from 'claude-code'
 import { readingColumn, resultBlock, toolLine } from './looks/frame'
 import { summarizeGroup } from './looks/group'
 import { resultView } from './looks/result'
-import { currentTheme, displayPath, isCentered, isGroupUnfolded, looksSettings, palette, resultLimit, toolView } from './looks/state'
+import { currentLook, currentTheme, displayPath, isCentered, isGroupUnfolded, looksSettings, palette, resultLimit, toolView } from './looks/state'
 import { isSummarized, summarizeTool } from './looks/summary'
 
 const DEFAULT_GROUP_MARK = '\u23fa'
@@ -23,7 +23,7 @@ export function installRows(on: On): void {
     if (!summary) {
       return isCentered() ? readingColumn({ ...layout, isEngineNode: true, children: await next(e) }) : next(e)
     }
-    return readingColumn({ ...layout, children: toolLine({ Text, summary, state, theme: currentTheme(), colors: palette() }) })
+    return readingColumn({ ...layout, children: toolLine({ Text, summary, state, theme: currentTheme(), colors: palette(), look: currentLook() }) })
   })
 
   on('ui.render', { component: 'ToolResult' }, async ($, e, next) => {
@@ -42,7 +42,7 @@ export function installRows(on: On): void {
         return <Box />
       }
       if (shown.kind === 'lines') {
-        return readingColumn({ ...layout, children: resultBlock({ Box, Text, colors: palette(), lines: shown.lines, more: shown.more }) })
+        return readingColumn({ ...layout, children: resultBlock({ Box, Text, colors: palette(), lines: shown.lines, more: shown.more, look: currentLook() }) })
       }
     }
     return isCentered() ? readingColumn({ ...layout, isEngineNode: true, children: await next(e) }) : next(e)
