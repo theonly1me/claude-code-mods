@@ -1,6 +1,7 @@
 import type { BoxProps, ElementConstructor, RenderElement, TextProps } from 'claude-code'
 
 import { promptLine, replyFrame, toolLine } from './frame'
+import { isThemeWords } from './state'
 import { paletteOf, themeOf } from './themes'
 import type { ThemeChoice, Tone } from './themes'
 
@@ -30,7 +31,7 @@ export function themePreview(options: {
   const { Box, Text } = options
   const theme = themeOf(options.choice)
   const colors = paletteOf({ choice: options.choice, tone: options.tone })
-  const spinner = theme ? `${theme.spinnerWords[0] ?? ''}${theme.spinnerSuffix}  (12s)` : 'Thinking…  (12s)'
+  const spinner = theme && isThemeWords() ? `${theme.spinnerWords[0] ?? ''}${theme.spinnerSuffix}  (12s)` : 'Thinking…  (12s)'
   return (
     <Box flexDirection="column" borderStyle="round" borderColor={colors.muted} paddingX={1}>
       <Text bold color={theme ? colors.accent : undefined}>{`Preview: ${theme?.label ?? 'Off'}`}</Text>

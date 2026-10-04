@@ -21,7 +21,7 @@ Looks redraws the rows of the transcript. It never changes what Claude reads or 
 - **Compact tool calls** (setting `toolCalls: compact`) draw one line per call and hide the output. A run of reads and searches folds into one line such as `Read 3 files, ran 1 command`. Any other tool, MCP tools included, gets one line with its name and its main argument.
 - **Plain tool calls** (setting `toolCalls: plain`) leave every tool row to Claude Code.
 - **Centered layout** (setting `layout: centered`) puts replies, prompts, and tool lines in one column at the reading width (100 characters by default), centered in the transcript.
-- **Themes** restyle your prompt row, the tool lines, a bar beside each reply, the spinner words, the turn footer, and the end of the hint line under the prompt.
+- **Themes** restyle your prompt row, the tool lines, a bar beside each reply, and the end of the hint line under the prompt. They keep Claude Code's own spinner and turn footer words. Turn on `themeWords` if you want the theme's words instead.
 - **Base theme**: a theme also sets the Claude Code base theme that suits it, in the same tone (dark or light) as yours. Retro CRT uses the ANSI variant, Zen paper the colorblind-friendly one, and Punk and Synthwave the plain one. If your base theme is `auto`, Looks leaves it alone. `/theme off` and `/exit` put your own base theme back.
 
 ## How to use
@@ -45,19 +45,21 @@ With tidy or compact tool calls, press ctrl+o to see every tool call in full, wi
 
 ## Themes
 
-Retro CRT: phosphor green, an amber accent, a `C:\>` prompt, and `PROCESSING █` while Claude works.
+The images below were captured with `themeWords` on, so they show each theme's spinner and footer words. By default your spinner and footer keep Claude Code's own words.
+
+Retro CRT: phosphor green, an amber accent, a `C:\>` prompt, and, with `themeWords` on, `PROCESSING █` while Claude works.
 
 ![Retro CRT](assets/theme-retro.png)
 
-Punk: hot pink and acid yellow, `✖` marks, and `SHREDDING !!`.
+Punk: hot pink and acid yellow, `✖` marks, and, with `themeWords` on, `SHREDDING !!`.
 
 ![Punk](assets/theme-punk.png)
 
-Synthwave: neon magenta and cyan, `▶` and `◆` marks, and `CRUISING ~`.
+Synthwave: neon magenta and cyan, `▶` and `◆` marks, and, with `themeWords` on, `CRUISING ~`.
 
 ![Synthwave](assets/theme-synthwave.png)
 
-Zen paper: quiet ink and moss tones, `○` marks, and `breathing…`.
+Zen paper: quiet ink and moss tones, `○` marks, and, with `themeWords` on, `breathing…`.
 
 ![Zen paper](assets/theme-zen.png)
 
@@ -69,6 +71,7 @@ Change these in `/plugin`:
 - `toolCalls` (`full`): `full` is the tidy view above. `compact` draws one line per call. `plain` keeps Claude Code's own tool rows.
 - `layout` (`left`): `centered` puts rows and replies in one column at the reading width. `left` keeps them at the left edge.
 - `readingWidth` (`100`): the column width in characters.
+- `themeWords` (off): on uses the theme's spinner and footer words, such as `CRUISING` or `Shredded`. Off keeps Claude Code's own words.
 
 ## Limits
 

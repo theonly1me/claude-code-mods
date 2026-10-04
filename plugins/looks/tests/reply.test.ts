@@ -33,7 +33,7 @@ test('the defaults keep the engine reply at the left edge', async ($, on) => {
   expect(await reply.find({ text: 'engine row' })).toBeDefined()
 })
 
-test('each theme redraws the prompt row, the spinner, the turn footer, and the hint tail', async ($, on) => {
+test('with themeWords on, each theme redraws the prompt row, the spinner, the turn footer, and the hint tail', { options: { themeWords: true } }, async ($, on) => {
   const seen: { word: string; suffix: string; tail: string; done: string }[] = []
   on('ui.render', { component: 'Spinner' }, ($, event) => {
     seen.push({ word: event.props.word, suffix: event.props.suffix, tail: '', done: '' })
@@ -64,6 +64,32 @@ test('each theme redraws the prompt row, the spinner, the turn footer, and the h
     expect(hint?.tail).toMatch(/Retro CRT|Punk|Synthwave|Zen paper/)
     expect(footer?.done).not.toBe('Baked')
   }
+})
+
+test('by default a theme keeps the engine spinner and footer words', async ($, on) => {
+  const seen: { word: string; suffix: string; tail: string }[] = []
+  on('ui.render', { component: 'Spinner' }, ($, event) => {
+    seen.push({ word: event.props.word, suffix: event.props.suffix, tail: '' })
+    return $.ui.resolve(event).Text({ children: [event.props.word] })
+  })
+  on('ui.render', { component: 'TurnDuration' }, ($, event) => {
+    seen.push({ word: event.props.word, suffix: '', tail: '' })
+    return $.ui.resolve(event).Text({ children: [event.props.word] })
+  })
+  on('ui.render', { component: 'PromptHint' }, ($, event) => {
+    seen.push({ word: '', suffix: '', tail: event.props.tail ?? '' })
+    return $.ui.resolve(event).Text({ children: [event.props.hint] })
+  })
+  engine({ on })
+  await start($)
+  await runTheme({ $, args: 'synthwave' })
+  await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'Spinner', requestId: 's1', props: { word: 'Sauteing', message: null, suffix: '\u2026', mode: 'responding' } })
+  await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'TurnDuration', requestId: 'd1', props: { word: 'Baked', durationMs: 3000 } })
+  await $.ui.mount({ plugin: 'looks', surface: 'terminal', component: 'PromptHint', requestId: 'h1', props: { isDraft: false, isWorking: false, hint: '? for shortcuts' } })
+  const [spinner, footer, hint] = seen
+  expect(spinner).toMatchObject({ word: 'Sauteing', suffix: '\u2026' })
+  expect(footer?.word).toBe('Baked')
+  expect(hint?.tail).toMatch(/Synthwave/)
 })
 
 test('with the theme off the spinner and the footer keep their own words', async ($, on) => {

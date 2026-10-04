@@ -10,6 +10,7 @@ export type LooksSettings = {
   toolCalls: ToolCallsMode
   layout: LayoutMode
   readingWidth: number
+  themeWords: boolean
 }
 
 export const SAVED_BASE_KEY = 'savedBaseTheme'
@@ -18,7 +19,7 @@ const DEFAULT_READING_WIDTH = 100
 const RESULT_LINES = 6
 const VERBOSE_RESULT_LINES = 30
 
-let settings: LooksSettings = { theme: 'off', toolCalls: 'full', layout: 'left', readingWidth: DEFAULT_READING_WIDTH }
+let settings: LooksSettings = { theme: 'off', toolCalls: 'full', layout: 'left', readingWidth: DEFAULT_READING_WIDTH, themeWords: false }
 let activeTheme: ThemeChoice = 'off'
 let highlighted: ThemeChoice = 'retro'
 let tone: Tone = 'dark'
@@ -34,6 +35,7 @@ export function settingsFrom(options: Readonly<Record<string, unknown>>): LooksS
     toolCalls: options.toolCalls === 'compact' || options.toolCalls === 'plain' ? options.toolCalls : 'full',
     layout: options.layout === 'centered' ? 'centered' : 'left',
     readingWidth: Number.isFinite(width) ? Math.max(MIN_READING_WIDTH, Math.round(width)) : DEFAULT_READING_WIDTH,
+    themeWords: options.themeWords === true,
   }
 }
 
@@ -118,6 +120,10 @@ export function baseThemeInfo(): { current?: string; saved?: string } {
 
 export function setBaseThemeInfo(next: { current?: string; saved?: string }): void {
   baseInfo = next
+}
+
+export function isThemeWords(): boolean {
+  return settings.themeWords
 }
 
 export function isCentered(): boolean {

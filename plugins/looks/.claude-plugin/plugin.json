@@ -34,6 +34,12 @@
       "title": "Reading width",
       "description": "The column width, in characters, for centered prompts, tool calls, and replies.",
       "default": 100
+    },
+    "themeWords": {
+      "type": "boolean",
+      "title": "Theme spinner words",
+      "description": "Off keeps Claude Code's own spinner and turn footer words under every theme. On uses the theme's words, such as CRUISING or Shredded.",
+      "default": false
     }
   }
 }

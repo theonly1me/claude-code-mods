@@ -1,12 +1,12 @@
 import type { On } from 'claude-code'
 
-import { currentTheme } from './looks/state'
+import { currentTheme, isThemeWords } from './looks/state'
 import { pickWord } from './looks/themes'
 
 export function installChrome(on: On): void {
   on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
     const theme = currentTheme()
-    if (e.surface !== 'terminal' || !theme || e.props.message !== null) {
+    if (e.surface !== 'terminal' || !theme || !isThemeWords() || e.props.message !== null) {
       return next(e)
     }
     const word = pickWord({ words: theme.spinnerWords, seed: e.props.word })
@@ -15,7 +15,7 @@ export function installChrome(on: On): void {
 
   on('ui.render', { component: 'TurnDuration' }, async ($, e, next) => {
     const theme = currentTheme()
-    if (e.surface !== 'terminal' || !theme) {
+    if (e.surface !== 'terminal' || !theme || !isThemeWords()) {
       return next(e)
     }
     return next({ ...e, props: { ...e.props, word: pickWord({ words: theme.doneWords, seed: e.requestId }) } })
