@@ -4,7 +4,7 @@
     "name": "Atchyut"
   },
   "metadata": {
-    "description": "Useful live views and autoplaying pixel games for Claude Code."
+    "description": "Work mods that make Claude clearer and cleaner, and pixel games that play themselves while you work."
   },
   "plugins": [
     {
@@ -23,29 +23,44 @@
       "description": "While Claude works on your task, a sharp partner asks the questions that change the result. Answers reach Claude mid-turn. Brainstorm and side chat modes too."
     },
     {
+      "name": "unslop",
+      "source": "./plugins/unslop",
+      "description": "Finds AI slop in Claude's changes (dashes, comment blocks, comments that repeat the code, tests that assert nothing, filler phrases) and tells Claude to remove it. Shows what was unslopped."
+    },
+    {
+      "name": "scope-guard",
+      "source": "./plugins/scope-guard",
+      "description": "Notices when Claude drifts outside your request. Clear drift waits for your answer in a question dialog; milder drift is flagged above the prompt with a pull-back key."
+    },
+    {
+      "name": "looks",
+      "source": "./plugins/looks",
+      "description": "Make Claude Code look the way you like: one-line tool calls, replies centered at a reading width, and four themes (Retro CRT, Punk, Synthwave, Zen paper) switched with /theme."
+    },
+    {
       "name": "samurai-dojo",
       "source": "./plugins/samurai-dojo",
-      "description": "A Claude samurai cuts down a Codex or Gemini alien for every tool call Claude makes."
+      "description": "A Claude samurai cuts down a Codex, Gemini, or ChatGPT foe for every tool call, and meditates, trains, and duels between them through four seasons."
     },
     {
       "name": "slayer-corps",
       "source": "./plugins/slayer-corps",
-      "description": "Tanjiro, Nezuko, Zenitsu, and Inosuke fight their way to Muzan as you and Claude work. The story continues every session."
+      "description": "Tanjiro, Nezuko, Zenitsu, and Inosuke take turns against demons up to Muzan as you and Claude work, and spar between strikes. The story continues every session."
     },
     {
       "name": "night-feast",
       "source": "./plugins/night-feast",
-      "description": "A vampire feeds on every tool call Claude finishes while the moon tracks how full the context window is. Dawn means it is time to compact."
+      "description": "A vampire feeds on every tool call Claude finishes while the moon tracks how full the context window is. Between meals it stalks, swoops, and lies in wait. Dawn means it is time to compact."
     },
     {
       "name": "little-harvest",
       "source": "./plugins/little-harvest",
-      "description": "Every file that changes becomes a crop: Claude's edits and yours grow a farm above the prompt, tests bring sun or storms, and passing turns fill the barn."
+      "description": "Every file that changes becomes a crop: Claude's edits and yours grow a farm in its own pane, tests bring sun or storms, and passing turns fill the barn."
     },
     {
       "name": "pocket-familiar",
       "source": "./plugins/pocket-familiar",
-      "description": "A fox spirit that lives on your work: passing tests feed it, finished turns cheer it, and it grows up to nine tails."
+      "description": "A fox spirit that lives on your work: passing tests feed it, finished turns cheer it, it plays while you are quiet, and it grows up to nine tails."
     }
   ]
 }

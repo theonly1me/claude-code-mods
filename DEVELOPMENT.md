@@ -8,7 +8,7 @@ npm run prepare      # copy the shared helpers each plugin imports
 npm run typecheck
 npm run validate     # claude plugin validate --strict, marketplace and every plugin
 npm test             # claude plugin test for every plugin
-npm run previews     # render game storyboards and rebuild previews/index.html
+npm run previews     # render game storyboards and GIFs, and rebuild previews/index.html
 ```
 
 To refresh the local SDK types, load any plugin once with `claude --plugin-dir ./plugins/<name>`, exit, and run `npm run sdk-types`. The types are ignored by Git because they describe your local Claude build.
@@ -16,9 +16,10 @@ To refresh the local SDK types, load any plugin once with `claude --plugin-dir .
 ## Layout
 
 - `plugins/<name>/` is a complete, self-contained plugin. `hooks/register.ts(x)` is the entry point.
-- `shared/` is the development source for small helpers: `pixel/` (bitmap, half-block cells, sprites, the 3x5 pixel font, and the stacked game stage), `text/meter.ts`, `privacy.ts`, and `noop.ts`. `npm run prepare` copies into each plugin only the shared files that plugin imports, following imports inside the shared files. Run it after editing `shared/`. The copies under `plugins/*/hooks/shared/` are committed release inputs.
+- `shared/` is the development source for small helpers: `pixel/` (bitmap, half-block cells, sprites, the 3x5 pixel font, the game stage, and the seasons kit: `seasons.ts`, `weather.ts`, `tree.ts`), `text/meter.ts`, `privacy.ts`, and `noop.ts`. `npm run prepare` copies into each plugin only the shared files that plugin imports, following imports inside the shared files. Run it after editing `shared/`. The copies under `plugins/*/hooks/shared/` are committed release inputs.
 - `plugins/change-journal/page/` holds the live page (HTML, CSS, and JS). The mod copies it into `~/.claude/change-journal/<project>/<session>/` at session start.
-- `tools/storyboards/<name>.ts` scripts a game's simulation into a PNG sheet: `npm run storyboard -- <name> [output.png]`. Without an output path it writes the plugin's `assets/preview.png`.
+- `tools/storyboards/<name>.ts` scripts a game's simulation. `storyboard()` makes a PNG sheet (`npm run storyboard -- <name> [output.png]`), and `animation()` makes the README GIF (`npm run animate -- <name> [output.gif]`, encoded by `tools/gif.ts`). Without an output path they write the plugin's `assets/preview.png` and `assets/preview.gif`.
+- `tools/ansi2html.mjs <capture.ansi> <out.html> [first] [last]` turns a `tmux capture-pane -e -p` capture into HTML for a headless Chrome screenshot. The work mod previews are made this way from real sessions.
 - `npm run journal-preview -- <folder>` writes a demo Change Journal page with sample data, for design work on the page.
 
 ## Rules the engine enforces
@@ -34,7 +35,13 @@ Shared code therefore stays pure, or receives `on` and registers its own hooks (
 
 ## Games
 
-Each game is a pure simulation (`createX()` with event inputs, `tick(dtMs)`, and `frame(): Bitmap`) drawn through the shared stage: an 8-row `Raster` keyed by the plugin name, repainted every 40 ms with `$.ui.blit`. Each band nests what is beneath it, so several games stack. A game yields to question dialogs and narrow terminals, and the desktop app gets a one-line summary.
+Each game is a pure simulation (`createX()` with event inputs, `tick(dtMs)`, and `frame(): Bitmap`) drawn through the shared stage in `shared/pixel/stage.tsx`:
+
+- The stage opens a `Pane` per game. The surface docks it beside the transcript in the fullscreen layout and seats it above the prompt otherwise. Its body is an 8-row `Raster` keyed `<game>:stage`, repainted every 40 ms with `$.ui.blit`, a stats line, and in the dock a log of recent activity.
+- Games are hidden by default. The game's command (registered by the stage) opens or closes the pane and writes the game's name to `~/.claude/mods/active-game`. Each game reads that file at session start and once a second, so the named game opens in new sessions and any other game closes: one game shows at a time.
+- An ambient director in each simulation keeps the scene busy between work events. Ambient action never changes stats, kills, crops, or story progress.
+- The dojo and the farm read the season from `seasons.ts` (5 minutes each, on the wall clock, so both agree), with `weather.ts` particles and the `tree.ts` seasonal tree.
+- The desktop app gets the stats line.
 
 ## Validation record
 
@@ -42,15 +49,16 @@ Verified on **2026-10-04** with Claude Code **2.1.289**:
 
 | Check | Result |
 | --- | --- |
-| Marketplace and eight plugins, `claude plugin validate --strict` | Passed |
-| `claude plugin test`, all plugins | 81 passed |
-| `tsc --noEmit` over shared code, plugins, and tests | Passed |
-| Live session, all eight mods loaded in tmux | All five game bands drew and stacked; the useful mods ran side by side |
-| Grill answers in a running turn | Verified in the session transcript, by digit hotkey during a tool call and by digit plus Enter while the model streamed |
-| Decision Lens | Decision cards rendered after real turns; previews are captures of that pane |
-| Change Journal | The live page updated from real turns with summaries, inferred reasons, and diffs; it survives a plugin reload in the same session |
-| Thinking chunks | `turn.step` delivers text chunks; Sonnet 5.5 and Opus 5.5 send empty thinking text, so the lens and the journal work from narration and tool calls |
+| Marketplace and eleven plugins, `claude plugin validate --strict` | Passed |
+| `claude plugin test`, all plugins | 169 passed |
+| `tsc --noEmit` over shared code, plugins, tools, and tests | Passed |
+| Live session, all eleven mods loaded in tmux with `CLAUDE_CODE_NO_FLICKER=1` | No game at start. `/dojo` docked the dojo beside the transcript, `/farm` replaced it, and a new session opened the farm again |
+| Work panes | `/why` and `/changes` opened with the keys; `/why keep 1` saved a rule; the lens docked as a tab beside the game |
+| Unslop | Each edit got a note in its tool result; `/unslop fix` had Claude remove the dash and comment block, and the status line read 3 removed, 0 open |
+| Scope Guard | A house rule that ran `rm -rf legacy` raised the question dialog with Sonnet's reason; Stop denied the command and Claude did not retry |
+| Grill | Digit plus Enter answered a question while the model streamed, and Claude used the answer in the same turn |
+| Looks | Compact tool rows and centered replies drew; `/theme punk` set the base theme to `dark`, and `/theme off` restored `dark-daltonized` |
 
-Not verified: a running desktop app window (the desktop summary line is covered by tests through the SDK renderer), and the timezone the hooks environment reports for the farm and pet skies.
+Not verified: a running desktop app window (the desktop summary lines are covered by tests through the SDK renderer), and the base theme restore when Claude Code is killed with ctrl+c twice (at that point `$.config.set` has no session; Looks restores it on the next `/theme off`).
 
 Before publishing, bump each changed plugin's version, run `npm run prepare`, regenerate previews, rerun the checks above, and review the full diff.
