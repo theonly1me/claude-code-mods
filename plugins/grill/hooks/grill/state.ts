@@ -1,3 +1,5 @@
+import { DEFAULT_HELPER_MODEL } from './helper'
+import type { Helper } from './helper'
 import type { Answer, ChatMessage, GrillMode, Job, Question, Round, RoundMode } from './types'
 
 const MIN_WORDS = 8
@@ -11,7 +13,7 @@ type Grill = {
   chat: ChatMessage[]
   isChatThinking: boolean
   lastTask: string
-  helperModel: string
+  helper: Helper
   nextRoundId: number
 }
 
@@ -23,7 +25,7 @@ const grill: Grill = {
   chat: [],
   isChatThinking: false,
   lastTask: '',
-  helperModel: 'haiku',
+  helper: { helperModel: DEFAULT_HELPER_MODEL, helperEffort: 'medium' },
   nextRoundId: 1,
 }
 
@@ -31,8 +33,8 @@ export function grillView(): Readonly<Grill> {
   return grill
 }
 
-export function configureGrill(options: { helperModel: string }): void {
-  grill.helperModel = options.helperModel
+export function configureGrill(helper: Helper): void {
+  grill.helper = helper
 }
 
 export function setMode(mode: GrillMode): void {

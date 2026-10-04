@@ -1,6 +1,6 @@
 {
   "name": "change-journal",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A live HTML page that shows every change Claude makes, with diffs, the reason for each edit, checks, and before/after behavior flows.",
   "author": {
     "name": "Atchyut"
@@ -24,7 +24,14 @@
       "type": "string",
       "title": "Helper model",
       "description": "The model alias or id for turn summaries.",
-      "default": "haiku"
+      "default": "claude-sonnet-5-5"
+    },
+    "helperEffort": {
+      "type": "string",
+      "title": "Helper effort",
+      "description": "How hard the helper model thinks when it summarizes a turn: low, medium, or high.",
+      "default": "medium",
+      "options": ["low", "medium", "high"]
     }
   }
 }

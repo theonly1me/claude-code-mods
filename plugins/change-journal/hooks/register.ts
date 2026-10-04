@@ -1,8 +1,9 @@
 import type { EngineInterface, PluginOptions, Register } from 'claude-code'
 
 import { installEdits } from './edits'
+import { helperFrom } from './journal/helper'
 import { statusLine, takeWrites } from './journal/output'
-import { restoreFrom } from './journal/restore'
+import { hunksFrom, restoreFrom } from './journal/restore'
 import { configureJournal, journalSettings } from './journal/settings'
 import { adoptJournal, claimAutoOpen, finishSummary, journalView, nextSummaryTurn, resetJournal } from './journal/state'
 import { parseSummary, SUMMARY_SYSTEM, summaryPrompt } from './journal/summary'
@@ -20,10 +21,9 @@ let isSummarizing = false
 let isInteractive = false
 
 function settingsFrom(options: PluginOptions): JournalSettings {
-  const model = options.helperModel
   return {
+    ...helperFrom(options),
     liveSummaries: options.liveSummaries !== false,
-    helperModel: typeof model === 'string' && model.trim() !== '' ? model.trim() : 'haiku',
     autoOpen: options.autoOpen !== false,
   }
 }
@@ -52,7 +52,12 @@ async function startJournal($: EngineInterface, options: { cwd: string }): Promi
   })
   const saved = restoreFrom({ text: await $.fs.read(`${folder}/data.js`).catch(() => ''), sessionId })
   if (saved) {
-    adoptJournal(saved)
+    const edits = []
+    for (const edit of saved.edits) {
+      const script = edit.hunkCount > 0 ? await $.fs.read(`${folder}/edit-${edit.id}.js`).catch(() => '') : ''
+      edits.push({ ...edit, hunks: hunksFrom(script) })
+    }
+    adoptJournal({ ...saved, edits })
   }
   for (const name of PAGE_FILES) {
     await $.fs.write(`${folder}/${name}`, await $.fs.read(`${$.plugin.root}/page/${name}`))
@@ -95,7 +100,14 @@ async function summarizeNext($: EngineInterface): Promise<void> {
     tests: journal.tests.filter(test => test.turn === turn.index),
   })
   const result = await $.model
-    .complete({ model: journalSettings().helperModel, system: SUMMARY_SYSTEM, prompt, maxTokens: 1500, timeoutMs: 45000 })
+    .complete({
+      model: journalSettings().helperModel,
+      effort: journalSettings().helperEffort,
+      system: SUMMARY_SYSTEM,
+      prompt,
+      maxTokens: 1500,
+      timeoutMs: 45000,
+    })
     .catch(() => undefined)
   finishSummary({ index: turn.index, summary: result?.isAnswered ? parseSummary(result.text) : null })
   isSummarizing = false
@@ -143,7 +155,7 @@ export const register: Register = (on, options) => {
       await openInBrowser($, { path })
       return { text: `Opened the Change Journal page: ${path}` }
     }
-    await $.ui.open({ id: PANE_ID, title: 'Change Journal', closeOnEscape: true, rows: 24 })
-    return { text: `Change Journal pane opened. Live page: ${path}` }
+    await $.ui.open({ id: PANE_ID, title: 'Change Journal', focus: true, rows: 24 })
+    return { text: `Change Journal pane opened with the keys; Esc gives them back. Live page: ${path}` }
   })
 }

@@ -2,6 +2,7 @@ import { expect, test } from 'claude-code/testing'
 
 import { parseNumstat, parseUnifiedDiff } from '../hooks/journal/diff'
 import { lastSentences, reasonFrom } from '../hooks/journal/reason'
+import { hunksFrom } from '../hooks/journal/restore'
 import { parseSummary } from '../hooks/journal/summary'
 import { isTestCommand } from '../hooks/journal/tests'
 
@@ -34,4 +35,10 @@ test('test commands are recognized across ecosystems', () => {
   expect(isTestCommand('node --test')).toBe(true)
   expect(isTestCommand('ls tests')).toBe(false)
   expect(isTestCommand('git commit -m "test"')).toBe(false)
+})
+
+test('diff hunks come back from an edit file after a reload', () => {
+  const script = '(window.__changeJournalEdits = window.__changeJournalEdits || {})[3] = {"hunks":[{"oldStart":1,"oldLines":1,"newStart":1,"newLines":2,"lines":["-a","+b","+c"]}]};\n'
+  expect(hunksFrom(script)).toEqual([{ oldStart: 1, oldLines: 1, newStart: 1, newLines: 2, lines: ['-a', '+b', '+c'] }])
+  expect(hunksFrom('')).toEqual([])
 })

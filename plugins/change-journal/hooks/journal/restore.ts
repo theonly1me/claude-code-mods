@@ -1,4 +1,4 @@
-import type { EditEntry, EditSource, EditStatus, FlowStep, SummaryStatus, TestRun, TurnEntry, TurnSummary } from './types'
+import type { EditEntry, EditSource, EditStatus, FlowStep, Hunk, SummaryStatus, TestRun, TurnEntry, TurnSummary } from './types'
 
 const PREFIX = 'window.__changeJournal = '
 const SOURCES: readonly EditSource[] = ['Edit', 'Write', 'NotebookEdit', 'Command']
@@ -98,4 +98,23 @@ export function restoreFrom(options: { text: string; sessionId: string }): Saved
       at: count(test.at),
     })),
   }
+}
+
+export function hunksFrom(text: string): Hunk[] {
+  const marker = '] = '
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text.slice(text.indexOf(marker) + marker.length).trim().replace(/;$/, ''))
+  } catch {
+    return []
+  }
+  return isRecord(parsed)
+    ? records(parsed.hunks).map(hunk => ({
+        oldStart: count(hunk.oldStart),
+        oldLines: count(hunk.oldLines),
+        newStart: count(hunk.newStart),
+        newLines: count(hunk.newLines),
+        lines: Array.isArray(hunk.lines) ? hunk.lines.filter((line): line is string => typeof line === 'string') : [],
+      }))
+    : []
 }

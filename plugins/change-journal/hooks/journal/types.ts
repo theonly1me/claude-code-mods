@@ -1,3 +1,5 @@
+import type { Helper } from './helper'
+
 export type EditStatus = 'applied' | 'failed' | 'denied'
 
 export type EditSource = 'Edit' | 'Write' | 'NotebookEdit' | 'Command'
@@ -57,9 +59,8 @@ export type TurnEntry = {
   summary: TurnSummary | null
 }
 
-export type JournalSettings = {
+export type JournalSettings = Helper & {
   liveSummaries: boolean
-  helperModel: string
   autoOpen: boolean
 }
 

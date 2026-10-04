@@ -1,6 +1,7 @@
 import type { EngineInterface, Register } from 'claude-code'
 
 import { CHAT_PANE, installChat } from './chat'
+import { helperFrom } from './grill/helper'
 import { CHAT_SYSTEM, chatPrompt, parseQuestions, ROUND_SYSTEM, roundPrompt, sharePrompt } from './grill/prompts'
 import { addChatMessage, configureGrill, grillView, setMode, setQuestions, startRound, takeJob } from './grill/state'
 import type { GrillMode } from './grill/types'
@@ -20,7 +21,14 @@ function modeFrom(value: unknown): GrillMode | undefined {
 
 async function complete($: EngineInterface, options: { system: string; prompt: string; maxTokens: number }): Promise<string | undefined> {
   const result = await $.model
-    .complete({ model: grillView().helperModel, system: options.system, prompt: options.prompt, maxTokens: options.maxTokens, timeoutMs: 40000 })
+    .complete({
+      model: grillView().helper.helperModel,
+      effort: grillView().helper.helperEffort,
+      system: options.system,
+      prompt: options.prompt,
+      maxTokens: options.maxTokens,
+      timeoutMs: 40000,
+    })
     .catch(() => undefined)
   return result?.isAnswered ? result.text.trim() : undefined
 }
@@ -81,8 +89,7 @@ async function runJob($: EngineInterface): Promise<void> {
 }
 
 export const register: Register = (on, options) => {
-  const model = options.helperModel
-  configureGrill({ helperModel: typeof model === 'string' && model.trim() !== '' ? model.trim() : 'haiku' })
+  configureGrill(helperFrom(options))
   installQuestions(on)
   installChat(on)
 
