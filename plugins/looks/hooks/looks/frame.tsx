@@ -23,9 +23,15 @@ export function readingColumn(options: ColumnLayout & { children: RenderNode; is
   }
   return (
     <Box flexDirection="row" paddingLeft={pad} marginTop={options.gapAbove ?? 0}>
-      <Box flexDirection="column" width={options.width} flexShrink={1}>
-        {options.children}
-      </Box>
+      {options.isCentered ? (
+        <Box flexDirection="column" width={options.width} flexShrink={1}>
+          {options.children}
+        </Box>
+      ) : (
+        <Box flexDirection="column" flexGrow={1} flexShrink={1}>
+          {options.children}
+        </Box>
+      )}
     </Box>
   )
 }
