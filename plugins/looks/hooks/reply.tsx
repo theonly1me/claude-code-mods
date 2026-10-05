@@ -5,6 +5,12 @@ import { replyPanel, userRow } from './looks/rich'
 import { currentLook, currentTheme, isCentered, looksSettings, noteTranscriptExpanded, palette } from './looks/state'
 
 const MARKDOWN_LIMIT = 10000
+const TABLE_ROW = /^\s*\|.*\|\s*$/m
+const TABLE_RULE = /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/m
+
+function hasTable(text: string): boolean {
+  return TABLE_ROW.test(text) && TABLE_RULE.test(text)
+}
 
 export function installReply(on: On): void {
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
@@ -13,7 +19,8 @@ export function installReply(on: On): void {
       return next(e)
     }
     const { Box, Text, Markdown } = $.ui.resolve(e)
-    const layout = { Box, width: looksSettings().readingWidth, isCentered: isCentered(), columns: e.viewport?.columns }
+    const isWide = hasTable(e.props.text)
+    const layout = { Box, width: looksSettings().readingWidth, isCentered: isCentered() && !isWide, columns: e.viewport?.columns }
     const body = <Markdown text={e.props.text} />
     const look = currentLook()
     if (look) {
