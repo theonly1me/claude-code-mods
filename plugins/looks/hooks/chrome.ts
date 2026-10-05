@@ -1,7 +1,7 @@
 import type { On } from 'claude-code'
 
 import { divider } from './looks/rich'
-import { currentLook, currentTheme, isThemeWords, looksSettings } from './looks/state'
+import { currentLook, currentTheme, isCentered, isThemeWords, looksSettings } from './looks/state'
 import { pickWord } from './looks/themes'
 
 export function installChrome(on: On): void {
@@ -19,7 +19,8 @@ export function installChrome(on: On): void {
     const look = currentLook()
     if (e.surface === 'terminal' && look) {
       const { Box, Text } = $.ui.resolve(e)
-      const width = Math.min(looksSettings().readingWidth, e.viewport?.columns ?? looksSettings().readingWidth)
+      const columns = e.viewport?.columns ?? looksSettings().readingWidth
+      const width = isCentered() ? Math.min(looksSettings().readingWidth, columns) : columns
       const word = theme && isThemeWords() ? pickWord({ words: theme.doneWords, seed: e.requestId }) : e.props.word
       return divider({ Box, Text, look, width, word, durationMs: e.props.durationMs })
     }
